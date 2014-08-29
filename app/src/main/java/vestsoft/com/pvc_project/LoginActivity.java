@@ -19,6 +19,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import vestsoft.com.api.ServerCommunication;
+
 
 /**
  * A login screen that offers login via email/password.
@@ -184,9 +186,10 @@ public class LoginActivity extends Activity {
         protected Boolean doInBackground(Void... params) {
             // attempt authentication against a network service.
 
+            Boolean result = false;
             try {
                //TODO: Authenticate user
-
+                result = ServerCommunication.login(mPhoneNumber, mPassword);
             } catch (Exception e) {
                 Log.e("PVC",e.getMessage());
             }
@@ -199,7 +202,7 @@ public class LoginActivity extends Activity {
 //                }
 //            }
 
-            return true;
+            return result;
         }
 
         @Override

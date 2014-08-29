@@ -1,5 +1,7 @@
 package vestsoft.com.api;
 
+import android.util.Log;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -25,21 +27,21 @@ public class ServerCommunication {
     private static String serverUrl = "http://au-pvc-project.herokuapp.com/";
     public static boolean login(String phoneNumber, String password) {
         boolean return_result = false;
-        JSONArray result = connect("phone_number=" + phoneNumber + "&password=" + password);
+        JSONObject result = connect("login?phone_number=" + phoneNumber + "&password=" + password);
         try {
-            if(result.getJSONObject(0).getString("status").equals("true")) {
+            if(result.getString("status").equals("true")) {
                 return_result = true;
             }
         }catch (JSONException e) {
         }
         return return_result;
     }
-    private static JSONArray connect(String parameters) {
+    private static JSONObject connect(String parameters) {
         String result = null;
         URI myURI = null;
 
         try {
-            myURI = new URI(serverUrl + "?" + parameters);
+            myURI = new URI(serverUrl + parameters);
         } catch (URISyntaxException e) {
             // Deal with it
         }
@@ -70,11 +72,12 @@ public class ServerCommunication {
         }
 
         try {
-            JSONArray myJSONarray = new JSONArray(result);
+            JSONObject myJSONarray = new JSONObject(result);
             return myJSONarray;
         } catch (JSONException e) {
+            Log.e("PVC", e.getMessage());
         }
-        return new JSONArray();
+        return new JSONObject();
     }
     public static String convertStreamToString(InputStream is) throws IOException {
         if (is != null) {
