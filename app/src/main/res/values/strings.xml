@@ -3,5 +3,6 @@
 
     <string name="app_name">Friend Finder</string>
     <string name="title_activity_maps">Find people</string>
+    <string name="prompt_username">Username</string>
 
 </resources>
