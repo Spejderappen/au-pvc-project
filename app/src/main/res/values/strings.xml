@@ -4,5 +4,8 @@
     <string name="app_name">Friend Finder</string>
     <string name="title_activity_maps">Find people</string>
     <string name="prompt_username">Username</string>
+    <string name="title_activity_my">MyActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
 
 </resources>
