@@ -4,35 +4,27 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.LoaderManager.LoaderCallbacks;
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.database.Cursor;
-import android.net.Uri;
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
-
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
  * A login screen that offers login via email/password.
-
  */
-public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
+
+public class LoginActivity extends Activity {
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -99,19 +91,19 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
 
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (!isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
         }
 
-        // Check for a valid phone number address.
+        // Check for a valid phone number.
         if (TextUtils.isEmpty(phoneNumer)) {
             mPhoneNumber.setError(getString(R.string.error_field_required));
             focusView = mPhoneNumber;
             cancel = true;
         } else if (!isPhoneNumberValid(phoneNumer)) {
-            mPhoneNumber.setError(getString(R.string.error_invalid_email));
+            mPhoneNumber.setError(getString(R.string.error_invalid_phonenumber));
             focusView = mPhoneNumber;
             cancel = true;
         }
@@ -124,7 +116,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(phoneNumer, password);
+            mAuthTask = new UserLoginTask(phoneNumer, password, this);
             mAuthTask.execute((Void) null);
         }
     }
@@ -172,61 +164,20 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
         }
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return new CursorLoader(this,
-                // Retrieve data rows for the device user's 'profile' contact.
-                Uri.withAppendedPath(ContactsContract.Profile.CONTENT_URI,
-                        ContactsContract.Contacts.Data.CONTENT_DIRECTORY), ProfileQuery.PROJECTION,
-
-                // Select only email addresses.
-                ContactsContract.Contacts.Data.MIMETYPE +
-                        " = ?", new String[]{ContactsContract.CommonDataKinds.Email
-                                                                     .CONTENT_ITEM_TYPE},
-
-                // Show primary email addresses first. Note that there won't be
-                // a primary email address if the user hasn't specified one.
-                ContactsContract.Contacts.Data.IS_PRIMARY + " DESC");
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        List<String> emails = new ArrayList<String>();
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            emails.add(cursor.getString(ProfileQuery.ADDRESS));
-            cursor.moveToNext();
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> cursorLoader) {
-
-    }
-
-    private interface ProfileQuery {
-        String[] PROJECTION = {
-                ContactsContract.CommonDataKinds.Email.ADDRESS,
-                ContactsContract.CommonDataKinds.Email.IS_PRIMARY,
-        };
-
-        int ADDRESS = 0;
-        int IS_PRIMARY = 1;
-    }
-
-
     /**
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mEmail;
+        private final String mPhoneNumber;
         private final String mPassword;
+        Context context;
 
-        UserLoginTask(String email, String password) {
-            mEmail = email;
+        UserLoginTask(String phonenumber, String password, Context context) {
+            mPhoneNumber = phonenumber;
             mPassword = password;
+            this.context = context;
         }
 
         @Override
@@ -234,8 +185,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
             // attempt authentication against a network service.
 
             try {
-                // Simulate network access.
-                Thread.sleep(2000);
+               //TODO: Authenticate user
 
             } catch (Exception e) {
                 Log.e("PVC",e.getMessage());
@@ -258,7 +208,8 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
             showProgress(false);
 
             if (success) {
-                finish();
+                Intent showMapActIntent = new Intent(context, MapsActivity.class);
+                context.startActivity(showMapActIntent);
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
