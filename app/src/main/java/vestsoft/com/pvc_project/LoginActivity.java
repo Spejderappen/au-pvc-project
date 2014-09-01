@@ -194,14 +194,6 @@ public class LoginActivity extends Activity {
                 Log.e("PVC",e.getMessage());
             }
 
-//            for (String credential : DUMMY_CREDENTIALS) {
-//                String[] pieces = credential.split(":");
-//                if (pieces[0].equals(mEmail)) {
-//                    // Account exists, return true if the password matches.
-//                    return pieces[1].equals(mPassword);
-//                }
-//            }
-
             return result;
         }
 
@@ -211,7 +203,7 @@ public class LoginActivity extends Activity {
             showProgress(false);
 
             if (success) {
-                Intent showMapActIntent = new Intent(context, MapsActivity.class);
+                Intent showMapActIntent = new Intent(context, ActivityMaps.class);
                 context.startActivity(showMapActIntent);
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
