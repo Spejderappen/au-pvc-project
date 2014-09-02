@@ -16,14 +16,4 @@
         android:text="Go to my location"
         android:id="@+id/btnGoToMyLocation"
         android:layout_gravity="center_horizontal" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Refresh friends positions"
-        android:id="@+id/btnUpdateFriendsPostion"
-        android:layout_alignBottom="@+id/btnGoToMyLocation"
-        android:layout_toRightOf="@+id/btnGoToMyLocation"
-        android:layout_toEndOf="@+id/btnGoToMyLocation" />
-
 </RelativeLayout>

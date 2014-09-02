@@ -55,17 +55,20 @@ public class FriendsAdapter  extends ArrayAdapter<Friend>{
                 view = inflater.inflate(R.layout.checkbox_item, null);
                 final ViewHolder viewHolder = new ViewHolder();
                 viewHolder.text = (TextView) view.findViewById(R.id.label);
+                viewHolder.text.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        viewHolder.checkbox.toggle();
+                        CheckboxChanged(viewHolder, viewHolder.checkbox.isChecked());
+                    }
+                });
                 viewHolder.checkbox = (CheckBox) view.findViewById(R.id.check);
                 viewHolder.checkbox
                         .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
                             @Override
-                            public void onCheckedChanged(CompoundButton buttonView,
-                                                         boolean isChecked) {
-                                Friend element = (Friend) viewHolder.checkbox.getTag();
-                                element.setSelected(buttonView.isChecked());
-                                mCallbacks.onCheckBoxCheckedListener(element);
-
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                CheckboxChanged(viewHolder, isChecked);
                             }
                         });
                 view.setTag(viewHolder);
@@ -78,38 +81,13 @@ public class FriendsAdapter  extends ArrayAdapter<Friend>{
             holder.text.setText(friendList.get(position).getName());
             holder.checkbox.setChecked(friendList.get(position).isSelected());
             return view;
-//            ViewHolder holder = null;
-//
-//            if (convertView == null) {
-//                LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//                convertView = vi.inflate(R.layout.checkbox_item, null);
-//
-//                holder = new ViewHolder();
-//                holder.code = (TextView) convertView.findViewById(R.id.code);
-//                holder.name = (CheckBox) convertView.findViewById(R.id.checkBox1);
-//                convertView.setTag(holder);
-//
-//                holder.name.setOnClickListener( new View.OnClickListener() {
-//                    public void onClick(View v) {
-//                        CheckBox cb = (CheckBox) v ;
-//                        Friend country = (Friend) cb.getTag();
-//                        country.setSelected(cb.isChecked());
-//                    }
-//                });
-//            }
-//            else {
-//                holder = (ViewHolder) convertView.getTag();
-//            }
-//
-//            Friend country = friendList.get(position);
-//            holder.code.setText(" (" + country.getPhone() + ")");
-//            holder.name.setText(country.getName());
-//            holder.name.setChecked(country.isSelected());
-//            holder.name.setTag(country);
-//
-//            return convertView;
-
         }
+
+    private void CheckboxChanged(ViewHolder viewHolder, boolean isChecked){
+        Friend element = (Friend) viewHolder.checkbox.getTag();
+        element.setSelected(isChecked);
+        mCallbacks.onCheckBoxCheckedListener(element);
+    }
 
     public static interface FriendsAdapterCallback {
         /**

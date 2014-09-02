@@ -6,14 +6,16 @@ package vestsoft.com.pvc_project.Model;
 public class Friend {
     String name = null;
     String phone = null;
+    String dateTime = null;
     boolean selected = false;
     double latitude = 0;
     double longitude = 0;
 
-    public Friend(String name, String phone, boolean selected, double latitude, double longitude) {
+    public Friend(String name, String phone, String dateTime, boolean selected, double latitude, double longitude) {
         super();
         this.name = name;
         this.phone = phone;
+        this.dateTime = dateTime;
         this.selected = selected;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -30,6 +32,12 @@ public class Friend {
     }
     public void setName(String name) {
         this.name = name;
+    }
+    public String getDateTime() {
+        return dateTime;
+    }
+    public void setDateTime(String dateTime) {
+        this.dateTime = dateTime;
     }
     public double getLatitide() {
         return latitude;

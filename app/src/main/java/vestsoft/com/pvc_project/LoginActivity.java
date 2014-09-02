@@ -6,6 +6,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,6 +42,10 @@ public class LoginActivity extends Activity {
     private View mProgressView;
     private View mLoginFormView;
 
+    private SharedPreferences sharedPrefs;
+
+    private final String PROJECT_NAME = "PVC_Project";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +75,8 @@ public class LoginActivity extends Activity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        sharedPrefs = getSharedPreferences(PROJECT_NAME, MODE_PRIVATE);
     }
 
     /**
@@ -237,6 +244,12 @@ public class LoginActivity extends Activity {
         protected void onCancelled() {
             mAuthTask = null;
             showProgress(false);
+        }
+
+        private void SavePhoneNumber(String phonenumber){
+            SharedPreferences.Editor editor = sharedPrefs.edit();
+            editor.putString("my_phone",phonenumber);
+            editor.commit();
         }
     }
 }

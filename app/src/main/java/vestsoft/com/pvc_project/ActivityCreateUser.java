@@ -3,6 +3,7 @@ package vestsoft.com.pvc_project;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -10,8 +11,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-
-import vestsoft.com.api.ServerCommunication;
 
 
 public class ActivityCreateUser extends Activity {
@@ -21,8 +20,11 @@ public class ActivityCreateUser extends Activity {
      */
     private UserCreateTask mCreateUserTask = null;
 
-    private EditText mEditTextName, mEditTextPhone, mEditTextPassword;
+    private EditText mEditTextFirstName, mEditTextLastName, mEditTextPhone, mEditTextPassword;
     private Button mBtnCreateUser;
+    private SharedPreferences sharedPrefs;
+
+    private final String PROJECT_NAME = "PVC_Project";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +35,8 @@ public class ActivityCreateUser extends Activity {
     }
 
     private void Initialize() {
-        mEditTextName = (EditText)findViewById(R.id.editTextCreateUserName);
+        mEditTextFirstName = (EditText)findViewById(R.id.editTextCreateUserFirstName);
+        mEditTextLastName = (EditText)findViewById(R.id.editTextCreateUserLastName);
         mEditTextPhone = (EditText)findViewById(R.id.editTextCreateUserPhone);
         mEditTextPassword = (EditText)findViewById(R.id.editTextCreateUserPassword);
 
@@ -44,6 +47,8 @@ public class ActivityCreateUser extends Activity {
                 CreateNewUser();
             }
         });
+
+        sharedPrefs = getSharedPreferences(PROJECT_NAME, MODE_PRIVATE);
     }
 
     private void CreateNewUser() {
@@ -51,26 +56,31 @@ public class ActivityCreateUser extends Activity {
             return;
         }
 
-        mEditTextName.setError(null);
+        mEditTextFirstName.setError(null);
+        mEditTextLastName.setError(null);
         mEditTextPhone.setError(null);
         mEditTextPassword.setError(null);
 
         // Store values at the time of the create user attempt.
-        String name = mEditTextName.getText().toString();
+        String firstName = mEditTextFirstName.getText().toString();
+        String lastName = mEditTextLastName.getText().toString();
         String phoneNumer = mEditTextPhone.getText().toString();
         String password = mEditTextPassword.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
 
-        // Check for a valid name (must have at least 3 characters
-        if (!TextUtils.isEmpty(name)) {
-            mEditTextName.setError(getString(R.string.error_field_required));
-            focusView = mEditTextName;
+        // Check for a valid firstName
+        if (TextUtils.isEmpty(firstName)) {
+            mEditTextFirstName.setError(getString(R.string.error_field_required));
+            focusView = mEditTextFirstName;
             cancel = true;
-        } else if (!isNameValid(name)){
-            mEditTextName.setError(getString(R.string.error_invalid_name));
-            focusView = mEditTextName;
+        }
+
+        // Check for a valid lastName
+        if (TextUtils.isEmpty(lastName)) {
+            mEditTextLastName.setError(getString(R.string.error_field_required));
+            focusView = mEditTextLastName;
             cancel = true;
         }
 
@@ -97,7 +107,7 @@ public class ActivityCreateUser extends Activity {
         }
 
         if (cancel) {
-            // There was an error; don't attempt login and focus the first
+            // There was an error; don't attempt create user and focus the first
             // form field with an error.
             focusView.requestFocus();
         } else {
@@ -105,8 +115,8 @@ public class ActivityCreateUser extends Activity {
             // perform the user create attempt.
 
             //showProgress(true);
-//            mCreateUserTask = new UserLoginTask(phoneNumer, password, this);
-//            mCreateUserTask.execute((Void) null);
+            mCreateUserTask = new UserCreateTask(firstName, lastName, phoneNumer, password, this);
+            mCreateUserTask.execute((Void) null);
         }
     }
 
@@ -118,9 +128,6 @@ public class ActivityCreateUser extends Activity {
         return phoneNumber.length() >= 8 ;
     }
 
-    private boolean isNameValid(String name) {
-        return name.length() >= 3;
-    }
 
     /**
      * Represents an asynchronous create task used to create
@@ -128,12 +135,13 @@ public class ActivityCreateUser extends Activity {
      */
     public class UserCreateTask extends AsyncTask<Void, Void, Boolean> {
 
-        //private final String mPhoneNumber;
-        private final String mPhoneNumber;
-        private final String mPassword;
+        private final String mFirstName, mLastName, mPhoneNumber,mPassword;
+
         Context context;
 
-        UserCreateTask(String name, String phonenumber, String password, Context context) {
+        UserCreateTask(String firstName, String lastName, String phonenumber, String password, Context context) {
+            mFirstName = firstName;
+            mLastName = lastName;
             mPhoneNumber = phonenumber;
             mPassword = password;
             this.context = context;
@@ -145,7 +153,7 @@ public class ActivityCreateUser extends Activity {
 
             Boolean result = false;
             try {
-                result = ServerCommunication.login(mPhoneNumber, mPassword);
+                //result = ServerCommunication.CreateUser(mFirstName, mLastName, mPhone, mPassword);
             } catch (Exception e) {
                 Log.e("PVC", e.getMessage());
             }
@@ -159,11 +167,12 @@ public class ActivityCreateUser extends Activity {
             //showProgress(false);
 
             if (success) {
+                SavePhoneNumber(mPhoneNumber);
                 Intent showMapActIntent = new Intent(context, ActivityMaps.class);
                 context.startActivity(showMapActIntent);
             } else {
-                //mPasswordView.setError(getString(R.string.error_incorrect_password));
-                //mPasswordView.requestFocus();
+                mEditTextPhone.setError("Phone number is already in use");
+                mEditTextPhone.requestFocus();
             }
         }
 
@@ -171,6 +180,12 @@ public class ActivityCreateUser extends Activity {
         protected void onCancelled() {
             mCreateUserTask = null;
             //showProgress(false);
+        }
+
+        private void SavePhoneNumber(String phonenumber){
+            SharedPreferences.Editor editor = sharedPrefs.edit();
+            editor.putString("my_phone",phonenumber);
+            editor.commit();
         }
     }
 }
