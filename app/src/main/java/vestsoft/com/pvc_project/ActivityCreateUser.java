@@ -1,10 +1,14 @@
 package vestsoft.com.pvc_project;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -25,6 +29,9 @@ public class ActivityCreateUser extends Activity {
     private SharedPreferences sharedPrefs;
 
     private final String PROJECT_NAME = "PVC_Project";
+
+    private View mProgressView;
+    private View mCreateUserFormView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +54,9 @@ public class ActivityCreateUser extends Activity {
                 CreateNewUser();
             }
         });
+
+        mCreateUserFormView = findViewById(R.id.create_user_form);
+        mProgressView = findViewById(R.id.create_user_progress);
 
         sharedPrefs = getSharedPreferences(PROJECT_NAME, MODE_PRIVATE);
     }
@@ -114,7 +124,7 @@ public class ActivityCreateUser extends Activity {
             // Show a progress spinner, and kick off a background task to
             // perform the user create attempt.
 
-            //showProgress(true);
+            showProgress(true);
             mCreateUserTask = new UserCreateTask(firstName, lastName, phoneNumer, password, this);
             mCreateUserTask.execute((Void) null);
         }
@@ -128,6 +138,41 @@ public class ActivityCreateUser extends Activity {
         return phoneNumber.length() >= 8 ;
     }
 
+    /**
+     * Shows the progress UI and hides the login form.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+    public void showProgress(final boolean show) {
+        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
+        // for very easy animations. If available, use these APIs to fade-in
+        // the progress spinner.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+            mCreateUserFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mCreateUserFormView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mCreateUserFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+                }
+            });
+
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            mProgressView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+                }
+            });
+        } else {
+            // The ViewPropertyAnimator APIs are not available, so simply show
+            // and hide the relevant UI components.
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            mCreateUserFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+        }
+    }
 
     /**
      * Represents an asynchronous create task used to create
@@ -164,7 +209,7 @@ public class ActivityCreateUser extends Activity {
         @Override
         protected void onPostExecute(final Boolean success) {
             mCreateUserTask = null;
-            //showProgress(false);
+            showProgress(false);
 
             if (success) {
                 SavePhoneNumber(mPhoneNumber);
@@ -179,12 +224,12 @@ public class ActivityCreateUser extends Activity {
         @Override
         protected void onCancelled() {
             mCreateUserTask = null;
-            //showProgress(false);
+            showProgress(false);
         }
 
         private void SavePhoneNumber(String phonenumber){
             SharedPreferences.Editor editor = sharedPrefs.edit();
-            editor.putString("my_phone",phonenumber);
+            editor.putString("my_phone", phonenumber);
             editor.commit();
         }
     }

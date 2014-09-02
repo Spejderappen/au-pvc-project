@@ -1,35 +1,31 @@
 package vestsoft.com.pvc_project;
 
 
-import android.app.Activity;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.util.Pair;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +66,7 @@ public class MapsNavigationDrawerFragment extends Fragment {
     private int mCurrentSelectedPosition = 0;
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
+    private GetFriendsTask mGetFriendsTask;
 
     public MapsNavigationDrawerFragment() {
     }
@@ -110,8 +107,10 @@ public class MapsNavigationDrawerFragment extends Fragment {
 //                selectItem(position);
 //            }
 //        });
-        ArrayAdapter<Friend> friendAdapter = new FriendsAdapter(getActivity(), getContacts());
-        mDrawerListView.setAdapter(friendAdapter);
+
+        mGetFriendsTask = new GetFriendsTask(getContacts(),getActivity());
+        mGetFriendsTask.execute();
+
 //        mDrawerListView.setAdapter(new ArrayAdapter<String>(
 //                getActionBar().getThemedContext(),
 //                android.R.layout.simple_list_item_activated_1,
@@ -295,12 +294,57 @@ public class MapsNavigationDrawerFragment extends Fragment {
                     Cursor pCur = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{id}, null);
                     while (pCur.moveToNext()) {
                         phone = pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        contactList.add(new Friend(name, phone, false, 0, 0));
+                        contactList.add(new Friend(name, phone, "not set", false, 0, 0));
                     }
                     pCur.close();
                 }
             }
         }
         return contactList;
+    }
+
+
+
+    /**
+     * Represents an asynchronous create task used to create
+     * the user.
+     */
+    public class GetFriendsTask extends AsyncTask<Void, Void, List<Friend>> {
+
+        private final List<Friend> friendList;
+
+        Context context;
+
+        GetFriendsTask(List<Friend> friendList, Context context) {
+            this.friendList = friendList;
+            this.context = context;
+        }
+
+        @Override
+        protected List<Friend> doInBackground(Void... params) {
+            // attempt authentication against a network service.
+
+            List<Friend> result = null;
+            try {
+                //result = ServerCommunication.GetExistingFriends(friendList);
+            } catch (Exception e) {
+                Log.e("PVC", e.getMessage());
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(final List<Friend> existingFriends) {
+            mGetFriendsTask = null;
+
+            ArrayAdapter<Friend> friendAdapter = new FriendsAdapter(getActivity(), existingFriends);
+            mDrawerListView.setAdapter(friendAdapter);
+        }
+
+        @Override
+        protected void onCancelled() {
+            mGetFriendsTask = null;
+        }
     }
 }

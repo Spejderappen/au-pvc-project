@@ -8,7 +8,18 @@
     android:paddingBottom="10dp"
     tools:context="vestsoft.com.pvc_project.ActivityCreateUser">
 
+    <ProgressBar
+        android:id="@+id/create_user_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"/>
 
+    <ScrollView
+        android:id="@+id/create_user_form"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -70,5 +81,6 @@
         android:layout_alignParentStart="true"
         android:layout_alignRight="@+id/editTextCreateUserPassword"
         android:layout_alignEnd="@+id/editTextCreateUserPassword" />
+</ScrollView>
 
 </RelativeLayout>
