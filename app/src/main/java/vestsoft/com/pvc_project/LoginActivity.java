@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
@@ -127,7 +129,7 @@ public class LoginActivity extends Activity {
     }
 
     private boolean isPasswordValid(String password) {
-        return password.length() > 5;
+        return password.length() >= 5;
     }
 
     /**
@@ -166,6 +168,27 @@ public class LoginActivity extends Activity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.login_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_new_user) {
+            Intent intentCreatUser = new Intent(this, ActivityCreateUser.class);
+            startActivity(intentCreatUser);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     /**
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
@@ -188,7 +211,6 @@ public class LoginActivity extends Activity {
 
             Boolean result = false;
             try {
-               //TODO: Authenticate user
                 result = ServerCommunication.login(mPhoneNumber, mPassword);
             } catch (Exception e) {
                 Log.e("PVC",e.getMessage());

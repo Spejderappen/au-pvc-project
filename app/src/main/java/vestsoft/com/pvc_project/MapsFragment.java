@@ -10,7 +10,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -28,6 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
 import java.util.List;
 
+import vestsoft.com.api.ServerCommunication;
 import vestsoft.com.pvc_project.Model.Friend;
 
 
@@ -244,6 +247,7 @@ public class MapsFragment extends Fragment implements LocationListener {
         });
     }
 
+// <editor-fold desc="- Region - Things regarding Location/GPS">
     private void setUpLocationManager() {
         mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         mLocationManager.requestLocationUpdates(
@@ -271,7 +275,6 @@ public class MapsFragment extends Fragment implements LocationListener {
         turnOnGPSAlert.show();
     }
 
-
     @Override
     public void onLocationChanged(Location location) {
         if (mMyMarker != null) {
@@ -296,4 +299,32 @@ public class MapsFragment extends Fragment implements LocationListener {
     public void onProviderDisabled(String s) {
         //Toast.makeText(getBaseContext(), "Gps turned off ", Toast.LENGTH_LONG).show();
     }
+// </editor-fold>
+
+    /**
+     * Represents an asynchronous task to get the positions of the friends and upload your own
+     */
+    Handler mHandler;
+    public void useHandler() {
+        mHandler = new Handler();
+        mHandler.post(mRunnable);
+    }
+
+    private Runnable mRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            UpdateMyPosition();
+            FetchFriendsPosition();
+            mHandler.postDelayed(mRunnable, 5000);
+        }
+
+        private void UpdateMyPosition(){
+        //ServerCommunication.UploadMyPostion();
+        }
+
+        private void FetchFriendsPosition(){
+           // ServerCommunication.UploadMyPostion(mFriendsMarkers);
+        }
+    };
 }

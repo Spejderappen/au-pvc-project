@@ -24,7 +24,7 @@
     <!--<Button-->
         <!--android:layout_width="wrap_content"-->
         <!--android:layout_height="wrap_content"-->
-        <!--android:text="Go to my location"-->
+        <!--android:text="Go to login_menu location"-->
         <!--android:id="@+id/btnGoToMyLocation"-->
         <!--android:layout_gravity="center_horizontal" />-->
 

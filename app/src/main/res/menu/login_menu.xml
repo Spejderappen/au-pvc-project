@@ -1,8 +1,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="vestsoft.com.pvc_project.MyActivity" >
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    <item android:id="@+id/action_new_user"
+        android:title="@string/action_create_user"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="always"
+        android:icon="@drawable/ic_action_new"
+      />
 </menu>

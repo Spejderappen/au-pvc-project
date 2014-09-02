@@ -56,7 +56,7 @@ public class MapsNavigationDrawerFragment extends Fragment {
     /**
      * A pointer to the current callbacks instance (the Activity).
      */
-    private NavigationDrawerCallbacks mCallbacks;
+    //private NavigationDrawerCallbacks mCallbacks;
 
     /**
      * Helper component that ties the action bar to the navigation drawer.
@@ -95,8 +95,8 @@ public class MapsNavigationDrawerFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        // Indicate that this fragment would like to influence the set of actions in the action bar.
-        setHasOptionsMenu(true);
+        // Indicate that this fragment wouldn't like to influence the set of actions in the action bar.
+        setHasOptionsMenu(false);
     }
 
     @Override
@@ -215,17 +215,17 @@ public class MapsNavigationDrawerFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        try {
-            mCallbacks = (NavigationDrawerCallbacks) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
-        }
+//        try {
+//            mCallbacks = (NavigationDrawerCallbacks) activity;
+//        } catch (ClassCastException e) {
+//            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+//        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mCallbacks = null;
+//        mCallbacks = null;
     }
 
     @Override
@@ -282,61 +282,23 @@ public class MapsNavigationDrawerFragment extends Fragment {
         return getActivity().getActionBar();
     }
 
-    /**
-     * Callbacks interface that all activities using this fragment must implement.
-     */
-    public static interface NavigationDrawerCallbacks {
-        /**
-         * Called when an item in the navigation drawer is selected.
-         */
-        void onNavigationDrawerItemSelected(Friend selectedFriend);
-    }
-
-
     public List<Friend> getContacts() {
         List<Friend> contactList = new ArrayList<Friend>();
         ContentResolver cr = getActivity().getContentResolver();
         Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
         String phone = null;
-//        String emailContact = null;
-//        String emailType = null;
-//        String image_uri = "";
-//        Bitmap bitmap = null;
         if (cur.getCount() > 0) {
             while (cur.moveToNext()) {
                 String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
                 String name = cur.getString(cur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-//                image_uri = cur.getString(cur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI));
                 if (Integer.parseInt(cur.getString(cur.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
                     Cursor pCur = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{id}, null);
                     while (pCur.moveToNext()) {
                         phone = pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        contactList.add(new Friend(name, phone, false));
+                        contactList.add(new Friend(name, phone, false, 0, 0));
                     }
                     pCur.close();
-//                    Cursor emailCur = cr.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?", new String[]{id}, null);
-//                    while (emailCur.moveToNext()) {
-//                        emailContact = emailCur.getString(emailCur.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-//                        emailType = emailCur.getString(emailCur.getColumnIndex(ContactsContract.CommonDataKinds.Email.TYPE));
-//                        sb.append("\nEmail:" + emailContact + "Email type:" + emailType);
-////                        System.out.println("Email " + emailContact + " Email Type : " + emailType);
-//                    }
-//                    emailCur.close();
                 }
-//                if (image_uri != null) {
-//                    System.out.println(Uri.parse(image_uri));
-//                    try {
-//                        bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), Uri.parse(image_uri));
-//                        sb.append("\n Image in Bitmap:" + bitmap);
-//                        //System.out.println(bitmap);
-//                    } catch (FileNotFoundException e) { // TODO Auto-generated catch block e.printStackTrace(); } catch (IOException e) { // TODO Auto-generated catch block e.printStackTrace(); } } sb.append("\n........................................"); } textDetail.setText(sb); } }
-//
-//
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//
-//                }
             }
         }
         return contactList;

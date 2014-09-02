@@ -9,7 +9,7 @@ import vestsoft.com.pvc_project.Model.Friend;
 
 
 public class ActivityMaps extends Activity
-        implements MapsNavigationDrawerFragment.NavigationDrawerCallbacks, FriendsAdapter.FriendsAdapterCallback{
+        implements FriendsAdapter.FriendsAdapterCallback{
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -24,7 +24,7 @@ public class ActivityMaps extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps_old);
+        setContentView(R.layout.activity_maps);
 
         mMapsNavigationDrawerFragment = (MapsNavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
 
@@ -39,15 +39,15 @@ public class ActivityMaps extends Activity
                 .commit();
     }
 
-    @Override
-    public void onNavigationDrawerItemSelected(Friend selectedFriend) {
-        // update the main content by replacing fragments
+//    @Override
+//    public void onNavigationDrawerItemSelected(Friend selectedFriend) {
+//        update the main content by replacing fragments
 //        MapsFragment mapsFragment = new MapsFragment();
 //        FragmentManager fragmentManager = getFragmentManager();
 //        fragmentManager.beginTransaction()
 //                .replace(R.id.container, mapsFragment)
 //                .commit();
-    }
+//    }
 
     @Override
     public void onCheckBoxCheckedListener(Friend selectedFriend) {
