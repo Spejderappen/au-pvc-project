@@ -200,7 +200,8 @@ public class ActivityCreateUser extends Activity {
 
             Boolean result = false;
             try {
-                //result = ServerCommunication.createUser(mFirstName, mLastName, mPhoneNumber, mPassword);
+                result = ServerCommunication.createUser(mFirstName, mLastName, mPhoneNumber, mPassword);
+
             } catch (Exception e) {
                 Log.e(getString(R.string.Teststring), e.getMessage());
             }

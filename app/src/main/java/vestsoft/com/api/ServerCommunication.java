@@ -27,16 +27,31 @@ public class ServerCommunication {
     private static String serverUrl = "http://au-pvc-project.herokuapp.com/";
     public static boolean login(String phoneNumber, String password) {
         boolean return_result = false;
-        JSONObject result = connect("login?phone_number=" + phoneNumber + "&password=" + password);
+        JSONArray result = connect("login?phone_number=" + phoneNumber + "&password=" + password);
         try {
-            if(result.getString("status").equals("true")) {
+            if(result.getJSONObject(0).getString("status").equals("true")) {
                 return_result = true;
             }
         }catch (JSONException e) {
         }
         return return_result;
     }
-    private static JSONObject connect(String parameters) {
+
+    public static boolean createUser(String first_name, String last_name, String phone_number, String password) {
+        JSONArray result = connect("users?first_name=" + first_name + "&last_name=" + last_name + "&phone_number=" + phone_number + "&password=" + password);
+        try {
+            if(result.getJSONObject(0).getString("success").equals("true")) {
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+
+    private static JSONArray connect(String parameters) {
         String result = null;
         URI myURI = null;
 
@@ -72,14 +87,14 @@ public class ServerCommunication {
         }
 
         try {
-            JSONObject myJSONarray = new JSONObject(result);
+            JSONArray myJSONarray = new JSONArray(result);
             return myJSONarray;
         } catch (JSONException e) {
             Log.e("PVC", e.getMessage());
         }
-        return new JSONObject();
+        return new JSONArray();
     }
-    public static String convertStreamToString(InputStream is) throws IOException {
+    private static String convertStreamToString(InputStream is) throws IOException {
         if (is != null) {
             StringBuilder sb = new StringBuilder();
             String line = null;
