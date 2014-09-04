@@ -16,6 +16,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import vestsoft.com.api.ServerCommunication;
+
 
 public class ActivityCreateUser extends Activity {
 
@@ -198,9 +200,9 @@ public class ActivityCreateUser extends Activity {
 
             Boolean result = false;
             try {
-                //result = ServerCommunication.CreateUser(mFirstName, mLastName, mPhone, mPassword);
+                //result = ServerCommunication.createUser(mFirstName, mLastName, mPhoneNumber, mPassword);
             } catch (Exception e) {
-                Log.e("PVC", e.getMessage());
+                Log.e(getString(R.string.Teststring), e.getMessage());
             }
 
             return result;
