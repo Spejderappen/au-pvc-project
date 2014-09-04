@@ -10,10 +10,12 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +26,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
+import vestsoft.com.pvc_project.Model.Friend;
 
 /**
  * Created by michael on 29/08/14.
@@ -57,10 +61,51 @@ public class ServerCommunication {
             } else {
                 return false;
             }
-
         } catch (JSONException e) {
             return false;
         }
+    }
+
+    public static boolean updatePosition(Friend friend) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("position", "true"));
+        params.add(new BasicNameValuePair("phone_number", friend.getPhone()));
+        params.add(new BasicNameValuePair("latitude", Double.toString(friend.getLatitide())));
+        params.add(new BasicNameValuePair("longitude", Double.toString(friend.getLongitude())));
+
+        JSONArray result = connectPut(params, "users/1");
+        try {
+            if(result.getJSONObject(0).getString("status").equals("true")) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (JSONException e) {
+        }
+        return false;
+    }
+
+    public static List<Friend> getExcistingFriends(List<Friend> friends) {
+        String friend_numbers = "";
+        for(Friend f : friends) {
+            friend_numbers += f.getPhone() + ",";
+        }
+        List<Friend> newFriendList = new ArrayList<Friend>();
+        JSONArray result = connectGet("users.json?friend_numbers=" + friend_numbers);
+        for(int i = 0 ; result.length() > i ; i++ ) {
+            try {
+                JSONObject obj = result.getJSONObject(i);
+                Friend friend = new Friend();
+                friend.setName(obj.getString("first_name") + " " + obj.getString("last_name"));
+                friend.setPhone(obj.getString("phone_number"));
+                friend.setDateTime(obj.getString("updated_at"));
+                friend.setLatitude(obj.getDouble("latitude"));
+                friend.setLongitude(obj.getDouble("longitude"));
+                newFriendList.add(friend);
+            } catch (JSONException e) {
+            }
+        }
+        return newFriendList;
     }
 
     private static JSONArray connectGet(String parameters) {
@@ -106,6 +151,7 @@ public class ServerCommunication {
         }
         return new JSONArray();
     }
+
     private static JSONArray connectPost(List<NameValuePair> parameters, String url) {
         String result = null;
 
@@ -148,6 +194,50 @@ public class ServerCommunication {
         }
         return new JSONArray();
     }
+
+    private static JSONArray connectPut(List<NameValuePair> parameters, String url) {
+        String result = null;
+
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPut httpPut = new HttpPut(serverUrl + url);
+        // Request parameters and other properties.
+
+        try {
+            httpPut.setEntity(new UrlEncodedFormEntity(parameters, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        //Execute and get the response.
+        HttpResponse response = null;
+        try {
+            response = httpClient.execute(httpPut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        HttpEntity httpEntity = response.getEntity();
+
+        if (httpEntity != null) {
+            InputStream instream;
+            try {
+                instream = httpEntity.getContent();
+                result = convertStreamToString(instream);
+                instream.close();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            JSONArray myJSONarray = new JSONArray(result);
+            return myJSONarray;
+        } catch (JSONException e) {
+            Log.e("PVC", e.getMessage());
+        }
+        return new JSONArray();
+    }
+
     private static String convertStreamToString(InputStream is) throws IOException {
         if (is != null) {
             StringBuilder sb = new StringBuilder();

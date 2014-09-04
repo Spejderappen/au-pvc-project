@@ -11,6 +11,9 @@ public class Friend {
     double latitude = 0;
     double longitude = 0;
 
+    public Friend() {
+
+    }
     public Friend(String name, String phone, String dateTime, boolean selected, double latitude, double longitude) {
         super();
         this.name = name;
