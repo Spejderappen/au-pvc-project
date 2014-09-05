@@ -232,6 +232,7 @@ public class LoginActivity extends Activity {
             showProgress(false);
 
             if (success) {
+                SavePhoneNumber(mPhoneNumber);
                 Intent showMapActIntent = new Intent(context, ActivityMaps.class);
                 context.startActivity(showMapActIntent);
             } else {

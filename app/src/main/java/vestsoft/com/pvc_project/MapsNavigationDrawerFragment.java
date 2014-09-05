@@ -29,6 +29,7 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
+import vestsoft.com.api.ServerCommunication;
 import vestsoft.com.pvc_project.Model.Friend;
 
 /**
@@ -294,6 +295,9 @@ public class MapsNavigationDrawerFragment extends Fragment {
                     Cursor pCur = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{id}, null);
                     while (pCur.moveToNext()) {
                         phone = pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        phone = phone.replaceAll("\\s", ""); // \\s Anything that is a space character (including space, tab characters etc)
+                        if (phone.substring(0,3).equals("+45"))
+                            phone = phone.substring(3,phone.length());
                         contactList.add(new Friend(name, phone, "not set", false, 0, 0));
                     }
                     pCur.close();
@@ -322,13 +326,14 @@ public class MapsNavigationDrawerFragment extends Fragment {
 
         @Override
         protected List<Friend> doInBackground(Void... params) {
-            // attempt authentication against a network service.
+            // attempt to validate which friends that exists in the system, against a network service.
 
-            List<Friend> result = null;
+            List<Friend> result = new ArrayList<Friend>();
             try {
-                //result = ServerCommunication.GetExistingFriends(friendList);
+                result = ServerCommunication.getExcistingFriends(friendList);
             } catch (Exception e) {
-                Log.e("PVC", e.getMessage());
+                if (e.getMessage() != null)
+                    Log.e("PVC", e.getMessage());
             }
 
             return result;

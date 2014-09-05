@@ -25,32 +25,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-    <EditText
-        android:layout_width="wrap_content"
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:hint="Last name"
+                android:ems="10"
+                android:id="@+id/editTextCreateUserLastName"
+                android:layout_alignTop="@+id/editTextCreateUserFirstName"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_toRightOf="@+id/editTextCreateUserFirstName"
+                android:layout_toEndOf="@+id/editTextCreateUserFirstName" />
+
+            <EditText
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
         android:hint="First name"
         android:width="150dp"
         android:ems="10"
         android:id="@+id/editTextCreateUserFirstName"
-        android:nextFocusDown="@+id/editTextCreateUserLastName"
-         />
+        android:nextFocusDown="@+id/editTextCreateUserLastName" />
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:hint="Last name"
-        android:ems="10"
-        android:id="@+id/editTextCreateUserLastName"
-        android:layout_alignTop="@+id/editTextCreateUserFirstName"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_toRightOf="@+id/editTextCreateUserFirstName"
-        android:layout_toEndOf="@+id/editTextCreateUserFirstName" />
-
-    <EditText
-        android:layout_width="wrap_content"
+            <EditText
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="phone"
         android:ems="10"
@@ -63,7 +63,7 @@
         android:layout_alignParentStart="true" />
 
     <EditText
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
         android:ems="10"
@@ -76,7 +76,7 @@
         android:layout_alignParentStart="true" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Create user"
         android:id="@+id/btnCreateUser"

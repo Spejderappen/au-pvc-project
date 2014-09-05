@@ -1,25 +1,53 @@
 package vestsoft.com.pvc_project;
 
 import android.app.Activity;
-import android.app.FragmentManager;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
+import android.util.Pair;
+import android.view.View;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import vestsoft.com.api.ServerCommunication;
 import vestsoft.com.pvc_project.Model.Friend;
 
 
 public class ActivityMaps extends Activity
-        implements FriendsAdapter.FriendsAdapterCallback{
+        implements FriendsAdapter.FriendsAdapterCallback, LocationListener {
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private MapsNavigationDrawerFragment mMapsNavigationDrawerFragment;
 
-    /**
-     * A pointer to the fragment containing the map.
-     */
-    private MapsFragment  mMapsFragment;
+    private SharedPreferences sharedPrefs;
+
+    private final String PROJECT_NAME = "PVC_Project";
+    private final int UPDATE_FREQUENZY = 60000;
+
+    private UpdatePositionTask mUpdatePostionTask = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,119 +59,326 @@ public class ActivityMaps extends Activity
         // Set up the drawer.
         mMapsNavigationDrawerFragment.setUp( R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        // Set up fragment containing the map
-        mMapsFragment = new MapsFragment();
-        FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.container, mMapsFragment)
-                .commit();
-    }
-
-//    @Override
-//    public void onNavigationDrawerItemSelected(Friend selectedFriend) {
-//        update the main content by replacing fragments
-//        MapsFragment mapsFragment = new MapsFragment();
+        // Set up layout containing the map
+//        mMapsFragment = new MapsFragment();
 //        FragmentManager fragmentManager = getFragmentManager();
 //        fragmentManager.beginTransaction()
-//                .replace(R.id.container, mapsFragment)
+//                .replace(R.id.container, mMapsFragment)
 //                .commit();
-//    }
+
+        setUpLocationManager();
+        setUpMapIfNeeded();
+        setUpButtons();
+
+        sharedPrefs = getSharedPreferences(PROJECT_NAME, MODE_PRIVATE);
+
+        StartUploadingMyPostion();
+
+        mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setUpMapIfNeeded();
+        StartUploadingMyPostion();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mHandler != null){
+            mHandler.removeCallbacks(mRunnable);
+        }
+    }
+
+    private void StartUploadingMyPostion(){
+        useHandler();
+    }
 
     @Override
     public void onCheckBoxCheckedListener(Friend selectedFriend) {
         if (selectedFriend.isSelected())
-            mMapsFragment.addFriend(selectedFriend);
+            addFriend(selectedFriend);
         else
-            mMapsFragment.removeFriend(selectedFriend);
+            removeFriend(selectedFriend);
     }
 
-//    public void onSectionAttached(int number) {
-//        switch (number) {
-//            case 1:
-//                mTitle = getString(R.string.title_section1);
-//                break;
-//            case 2:
-//                mTitle = getString(R.string.title_section2);
-//                break;
-//            case 3:
-//                mTitle = getString(R.string.title_section3);
-//                break;
-//        }
-//    }
+    public void addFriend(Friend selectedFriend) {
+        Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(selectedFriend.getLatitide(), selectedFriend.getLongitude()))
+                .title(selectedFriend.getName())
+                .snippet("Was here at " + selectedFriend.getDateTime())
+        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        mFriendsMarkers.add(new Pair<Friend, Marker>(selectedFriend,tempMarker));
 
-//    public void restoreActionBar() {
-//        ActionBar actionBar = getActionBar();
-//        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-//        actionBar.setDisplayShowTitleEnabled(true);
-//        actionBar.setTitle(mTitle);
-//    }
-//
-//
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-////        if (!mMapsNavigationDrawerFragment.isDrawerOpen()) {
-////            // Only show items in the action bar relevant to this screen
-////            // if the drawer is not showing. Otherwise, let the drawer
-////            // decide what to show in the action bar.
-////            getMenuInflater().inflate(R.menu.to_delete_later, menu);
-////            restoreActionBar();
-////            return true;
-////        }
-////        return super.onCreateOptionsMenu(menu);
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-////        // Handle action bar item clicks here. The action bar will
-////        // automatically handle clicks on the Home/Up button, so long
-////        // as you specify a parent activity in AndroidManifest.xml.
-////        int id = item.getItemId();
-////        if (id == R.id.action_settings) {
-////            return true;
-////        }
-////        return super.onOptionsItemSelected(item);
-//        return true;
-//    }
+        // Move camera to the position of the friend
+        
+    }
 
-//    /**
-//     * A placeholder fragment containing a simple view.
-//     */
-//    public static class PlaceholderFragment extends Fragment {
-//            /**
-//             * The fragment argument representing the section number for this
-//             * fragment.
-//             */
-//            private static final String ARG_SECTION_NUMBER = "section_number";
-//
-//            /**
-//             * Returns a new instance of this fragment for the given section
-//             * number.
-//             */
-//            public static PlaceholderFragment newInstance(int sectionNumber) {
-//                PlaceholderFragment fragment = new PlaceholderFragment();
-//                Bundle args = new Bundle();
-//                args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-//                fragment.setArguments(args);
-//                return fragment;
-//            }
-//
-//            public PlaceholderFragment() {
-//            }
-//
-//        @Override
-//        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-//                Bundle savedInstanceState) {
-//            View rootView = inflater.inflate(R.layout.fragment_maps, container, false);
-//            return rootView;
-//        }
-//
-//        @Override
-//        public void onAttach(Activity activity) {
-//            super.onAttach(activity);
-////            ((ToDeleteLater) activity).onSectionAttached(
-////                    getArguments().getInt(ARG_SECTION_NUMBER));
-//        }
-//    }
+    public void removeFriend(Friend selectedFriend) {
+        Pair foundPair = null;
+        for (Pair p : mFriendsMarkers){
+            if (p.first.equals(selectedFriend)){
+                ((Marker)p.second).remove();
+                foundPair = p;
+                break;
+            }
+        }
+        if (foundPair != (null)){
+            mFriendsMarkers.remove(foundPair);
+        }
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mHandler = null;
+    }
+
+    /**
+     * STUFF REGARDING THE MAP
+     */
+    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private LocationManager mLocationManager;
+
+    private Marker mMyMarker;
+    private List<Pair<Friend,Marker>> mFriendsMarkers;
+
+    private Location mMyLastLocation;
+
+    /**
+            * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
+            * installed) and the map has not already been instantiated.. This will ensure that we only ever
+    * call {@link #setUpMap()} once when {@link #mMap} is not null.
+            * <p>
+    * If it isn't installed {@link com.google.android.gms.maps.SupportMapFragment} (and
+            * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
+    * install/update the Google Play services APK on their device.
+    * <p>
+    * A user can return to this FragmentActivity after following the prompt and correctly
+    * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
+    * have been completely destroyed during this process (it is likely that it would only be
+            * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
+            * method in {@link #onResume()} to guarantee that it will be called.
+    */
+    private void setUpMapIfNeeded() {
+        // Do a null check to confirm that we have not already instantiated the map.
+        if (mMap == null) {
+            // Try to obtain the map from the MapFragment.
+            MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map_friends);
+            try {
+                mMap = mapFragment.getMap();
+                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        if (marker.equals(mMyMarker)){
+
+                        }
+                        return  false;
+                    }
+                });
+            }
+            catch (Exception e){
+                Log.e("Map Fragment", e.getMessage());
+            }
+
+            // Check if we were successful in obtaining the map.
+            if (mMap != null) {
+                setUpMap();
+            }
+        }
+    }
+
+    /**
+     * This is where we can add markers or lines, add listeners or move the camera.
+     * This should only be called once and when we are sure that {@link #mMap} is not null.
+     */
+    private void setUpMap() {
+        if (mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (location != null) {
+                mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude()))
+                        .title("My location")
+                        .snippet("This is a snippet"));
+
+                CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10);
+                mMap.moveCamera(cmUpdate);
+                mMyLastLocation = location;
+            }
+        }
+        else {
+            AskUserToTurnOnGPS();
+        }
+    }
+
+    private void setUpButtons() {
+        findViewById(R.id.imgBtnGoToMyLocation).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mMyLastLocation != null) {
+                    mMyMarker.remove();
+                    mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude())).title("MyLocation").snippet("This is a snippet"));
+                    CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude()), 12);
+                    mMap.moveCamera(cmUpdate);
+                } else {
+                     Toast.makeText(getApplicationContext(), "Couldn't find your location", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    // <editor-fold desc="- Region - Things regarding Location/GPS">
+    private void setUpLocationManager() {
+        mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        mLocationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, // The provicer we want to use
+                5000, // How often the location  mininum is requested, in milliseconds
+                10, // the minimum distance interval for notifications, in meters
+                this);
+    }
+
+    private void AskUserToTurnOnGPS() {
+        // Show dialog
+        AlertDialog.Builder builder;
+
+        builder = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK);
+        builder.setTitle("GPS");
+        builder.setMessage("Please turn on the GPS");
+        builder.setCancelable(true);
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                dialog.cancel();
+            }
+        });
+        AlertDialog turnOnGPSAlert = builder.create();
+        turnOnGPSAlert.show();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (mMyMarker != null) {
+            mMyMarker.remove();
+        }
+
+        mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("MyLocation").snippet("This is a snippet"));
+        mMyLastLocation = location;
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+        //Toast.makeText(getBaseContext(), "Gps turned on ", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+        //Toast.makeText(getBaseContext(), "Gps turned off ", Toast.LENGTH_LONG).show();
+    }
+// </editor-fold>
+
+    /**
+     * Represents an  task to get the positions of the friends and upload your own
+     */
+    Handler mHandler;
+    public void useHandler() {
+        mHandler = new Handler();
+        mHandler.post(mRunnable);
+    }
+
+    private Runnable mRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            mUpdatePostionTask = new UpdatePositionTask();
+            mUpdatePostionTask.execute((Void) null);
+            //FetchFriendsPosition();
+            mHandler.postDelayed(mRunnable, UPDATE_FREQUENZY);
+        }
+    };
+
+    /**
+     * Represents an asynchronous login/registration task used to authenticate
+     * the user.
+     */
+    public class UpdatePositionTask extends AsyncTask<Void, Void, Boolean> {
+        UpdatePositionTask( ) {        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            try {
+               UpdateMyPosition();
+            } catch (Exception e) {
+                Log.e(PROJECT_NAME,e.getMessage());
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+           // Don't really do anything
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUpdatePostionTask = null;
+        }
+
+        private void UpdateMyPosition(){
+            if (mMyLastLocation != null) {
+                Friend mySelf = new Friend();
+                mySelf.setLatitude(mMyLastLocation.getLatitude());
+                mySelf.setLongitude(mMyLastLocation.getLongitude());
+                mySelf.setPhone(sharedPrefs.getString("my_phone", "not found"));
+                ServerCommunication.updatePosition(mySelf);
+            }
+        }
+    }
+
+    /**
+            * Represents an asynchronous login/registration task used to authenticate
+    * the user.
+            */
+    public class FetchFriendsPositionsTask extends AsyncTask<Void, Void, Boolean> {
+        FetchFriendsPositionsTask( ) {        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            try {
+                FetchFriendsPosition();
+            } catch (Exception e) {
+                Log.e(PROJECT_NAME,e.getMessage());
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            // Don't really do anything
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUpdatePostionTask = null;
+        }
+
+        private void FetchFriendsPosition(){
+            // ServerCommunication.UploadMyPostion(mFriendsMarkers);
+        }
+    }
 }

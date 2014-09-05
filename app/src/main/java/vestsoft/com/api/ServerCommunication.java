@@ -90,6 +90,8 @@ public class ServerCommunication {
         for(Friend f : friends) {
             friend_numbers += f.getPhone() + ",";
         }
+        friend_numbers = friend_numbers.substring(0, friend_numbers.length()-1);
+
         List<Friend> newFriendList = new ArrayList<Friend>();
         JSONArray result = connectGet("users.json?friend_numbers=" + friend_numbers);
         for(int i = 0 ; result.length() > i ; i++ ) {
@@ -115,7 +117,8 @@ public class ServerCommunication {
         try {
             myURI = new URI(serverUrl + parameters);
         } catch (URISyntaxException e) {
-            // Deal with it
+            if (e.getMessage() != null)
+                Log.e("PVC", e.getMessage());
         }
         HttpClient httpClient = new DefaultHttpClient();
         HttpGet getMethod = new HttpGet(myURI);
