@@ -285,6 +285,8 @@ public class MapsNavigationDrawerFragment extends Fragment {
                         phone = phone.replaceAll("\\s", ""); // \\s Anything that is a space character (including space, tab characters etc)
                         if (phone.substring(0,3).equals("+45"))
                             phone = phone.substring(3,phone.length());
+                        if (phone.substring(0,4).equals("0045"))
+                            phone = phone.substring(4,phone.length());
                         contactList.add(new Friend(name, phone, "not set", false, 0, 0));
                     }
                     pCur.close();
