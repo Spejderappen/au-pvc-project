@@ -20,6 +20,7 @@ import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import vestsoft.com.api.ServerCommunication;
@@ -39,7 +40,7 @@ public class LoginActivity extends Activity {
     // UI references.
     private EditText mPhoneNumber;
     private EditText mPasswordView;
-    private View mProgressView;
+    private ProgressBar mProgressView;
     private View mLoginFormView;
 
     private SharedPreferences sharedPrefs;
@@ -74,7 +75,7 @@ public class LoginActivity extends Activity {
         });
 
         mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
+        mProgressView = (ProgressBar)findViewById(R.id.login_progress);
 
         sharedPrefs = getSharedPreferences(PROJECT_NAME, MODE_PRIVATE);
     }
@@ -173,6 +174,12 @@ public class LoginActivity extends Activity {
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
+
+//        if (show){
+//            mProgressView.setVisibility(View.VISIBLE);
+//        } else{
+//            mProgressView.setVisibility(View.INVISIBLE);
+//        }
     }
 
     @Override
@@ -220,7 +227,8 @@ public class LoginActivity extends Activity {
             try {
                 result = ServerCommunication.login(mPhoneNumber, mPassword);
             } catch (Exception e) {
-                Log.e("PVC",e.getMessage());
+                if (e.getMessage() != null)
+                    Log.e("PVC",e.getMessage());
             }
 
             return result;

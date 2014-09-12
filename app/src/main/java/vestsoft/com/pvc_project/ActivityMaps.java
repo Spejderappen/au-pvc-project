@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.util.Pair;
@@ -45,9 +46,10 @@ public class ActivityMaps extends Activity
     private SharedPreferences sharedPrefs;
 
     private final String PROJECT_NAME = "PVC_Project";
-    private final int UPDATE_FREQUENZY = 60000;
+    private final int UPDATE_FREQUENZY = 5000;
 
     private UpdatePositionTask mUpdatePostionTask = null;
+    private FetchFriendsPositionsTask mUpdateFriendsPositionsTask = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +77,7 @@ public class ActivityMaps extends Activity
         StartUploadingMyPostion();
 
         mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
+        StartUpdatingFriendsPositions();
     }
 
 
@@ -97,23 +100,30 @@ public class ActivityMaps extends Activity
         useHandler();
     }
 
+    private void StartUpdatingFriendsPositions(){
+        useUpdateFriendsHandler();
+    }
+
     @Override
     public void onCheckBoxCheckedListener(Friend selectedFriend) {
         if (selectedFriend.isSelected())
-            addFriend(selectedFriend);
+            addFriend(selectedFriend, true);
         else
             removeFriend(selectedFriend);
     }
 
-    public void addFriend(Friend selectedFriend) {
+    public void addFriend(Friend selectedFriend, boolean moveToFriend) {
         Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(selectedFriend.getLatitide(), selectedFriend.getLongitude()))
                 .title(selectedFriend.getName())
                 .snippet("Was here at " + selectedFriend.getDateTime())
         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         mFriendsMarkers.add(new Pair<Friend, Marker>(selectedFriend,tempMarker));
 
-        // Move camera to the position of the friend
-        
+        if (moveToFriend) {
+            // Move camera to the position of the friend
+            CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(selectedFriend.getLatitide(), selectedFriend.getLongitude()), 10);
+            mMap.moveCamera(cmUpdate);
+        }
     }
 
     public void removeFriend(Friend selectedFriend) {
@@ -200,7 +210,7 @@ public class ActivityMaps extends Activity
             if (location != null) {
                 mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude()))
                         .title("My location")
-                        .snippet("This is a snippet"));
+                        );
 
                 CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10);
                 mMap.moveCamera(cmUpdate);
@@ -218,7 +228,7 @@ public class ActivityMaps extends Activity
             public void onClick(View view) {
                 if (mMyLastLocation != null) {
                     mMyMarker.remove();
-                    mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude())).title("MyLocation").snippet("This is a snippet"));
+                    mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude())).title("MyLocation"));
                     CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude()), 12);
                     mMap.moveCamera(cmUpdate);
                 } else {
@@ -268,7 +278,7 @@ public class ActivityMaps extends Activity
             mMyMarker.remove();
         }
 
-        mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("MyLocation").snippet("This is a snippet"));
+        mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("MyLocation"));
         mMyLastLocation = location;
     }
 
@@ -303,8 +313,24 @@ public class ActivityMaps extends Activity
         public void run() {
             mUpdatePostionTask = new UpdatePositionTask();
             mUpdatePostionTask.execute((Void) null);
-            //FetchFriendsPosition();
+
             mHandler.postDelayed(mRunnable, UPDATE_FREQUENZY);
+        }
+    };
+
+    Handler mUpdateFriendsHandler;
+    public void useUpdateFriendsHandler(){
+        mUpdateFriendsHandler = new Handler(Looper.getMainLooper());
+        mUpdateFriendsHandler.postDelayed(mRunnableUpdateFriends, UPDATE_FREQUENZY);
+    }
+
+    private Runnable mRunnableUpdateFriends = new Runnable() {
+
+        @Override
+        public void run() {
+            mUpdateFriendsPositionsTask = new FetchFriendsPositionsTask(getApplicationContext());
+            mUpdateFriendsPositionsTask.execute((Void) null);
+            mUpdateFriendsHandler.postDelayed(mRunnableUpdateFriends, UPDATE_FREQUENZY);
         }
     };
 
@@ -335,6 +361,7 @@ public class ActivityMaps extends Activity
         @Override
         protected void onCancelled() {
             mUpdatePostionTask = null;
+            mUpdateFriendsPositionsTask = null;
         }
 
         private void UpdateMyPosition(){
@@ -353,11 +380,15 @@ public class ActivityMaps extends Activity
     * the user.
             */
     public class FetchFriendsPositionsTask extends AsyncTask<Void, Void, Boolean> {
-        FetchFriendsPositionsTask( ) {        }
+        Context context;
+        List<Friend> friendsUpdated = new ArrayList<Friend>();
+
+        FetchFriendsPositionsTask(Context context )        {
+            this.context = context;
+        }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-
             try {
                 FetchFriendsPosition();
             } catch (Exception e) {
@@ -369,16 +400,33 @@ public class ActivityMaps extends Activity
 
         @Override
         protected void onPostExecute(final Boolean success) {
-            // Don't really do anything
+            if (friendsUpdated.size() > 0 ) {
+                mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
+                for (Friend friend : friendsUpdated) {
+                    Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(friend.getLatitide(), friend.getLongitude()))
+                            .title(friend.getName())
+                            .snippet("Was here at " + friend.getDateTime())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    mFriendsMarkers.add(new Pair<Friend, Marker>(friend, tempMarker));
+                }
+            }
         }
 
         @Override
         protected void onCancelled() {
             mUpdatePostionTask = null;
+            mUpdateFriendsPositionsTask = null;
         }
 
         private void FetchFriendsPosition(){
-            // ServerCommunication.UploadMyPostion(mFriendsMarkers);
+            Log.d("PVC", Integer.toString(mFriendsMarkers.size()));
+            if (mFriendsMarkers.size() > 0) {
+                List<Friend> friends = new ArrayList<Friend>();
+                for (Pair<Friend, Marker> friend : mFriendsMarkers) {
+                    friends.add(friend.first);
+                }
+                friendsUpdated = ServerCommunication.getExistingFriends(friends);
+            }
         }
     }
 }

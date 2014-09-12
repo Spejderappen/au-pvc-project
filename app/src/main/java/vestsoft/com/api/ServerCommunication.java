@@ -1,6 +1,7 @@
 package vestsoft.com.api;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -85,7 +86,7 @@ public class ServerCommunication {
         return false;
     }
 
-    public static List<Friend> getExcistingFriends(List<Friend> friends) {
+    public static List<Friend> getExistingFriends(List<Friend> friends) {
         String friend_numbers = "";
         for(Friend f : friends) {
             friend_numbers += f.getPhone() + ",";
@@ -126,7 +127,9 @@ public class ServerCommunication {
         try {
             webServerResponse = httpClient.execute(getMethod);
         } catch (ClientProtocolException e) {
+            e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
         }
 
         HttpEntity httpEntity = webServerResponse.getEntity();
