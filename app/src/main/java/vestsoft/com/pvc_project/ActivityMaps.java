@@ -377,8 +377,8 @@ public class ActivityMaps extends Activity
 
     /**
             * Represents an asynchronous login/registration task used to authenticate
-    * the user.
-            */
+            * the user.
+    */
     public class FetchFriendsPositionsTask extends AsyncTask<Void, Void, Boolean> {
         Context context;
         List<Friend> friendsUpdated = new ArrayList<Friend>();
@@ -401,13 +401,18 @@ public class ActivityMaps extends Activity
         @Override
         protected void onPostExecute(final Boolean success) {
             if (friendsUpdated.size() > 0 ) {
+                for (Pair<Friend, Marker> friendMarkerPair : mFriendsMarkers){
+                    removeFriend(friendMarkerPair.first);
+                }
+
                 mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
                 for (Friend friend : friendsUpdated) {
-                    Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(friend.getLatitide(), friend.getLongitude()))
-                            .title(friend.getName())
-                            .snippet("Was here at " + friend.getDateTime())
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-                    mFriendsMarkers.add(new Pair<Friend, Marker>(friend, tempMarker));
+                    addFriend(friend,false);
+//                    Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(friend.getLatitide(), friend.getLongitude()))
+//                            .title(friend.getName())
+//                            .snippet("Was here at " + friend.getDateTime())
+//                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+//                    mFriendsMarkers.add(new Pair<Friend, Marker>(friend, tempMarker));
                 }
             }
         }
