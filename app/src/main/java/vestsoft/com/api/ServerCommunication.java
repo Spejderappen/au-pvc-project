@@ -118,6 +118,7 @@ public class ServerCommunication {
                 Friend friend = new Friend();
                 friend.setName(obj.getString("first_name") + " " + obj.getString("last_name"));
                 friend.setPhone(obj.getString("phone_number"));
+                friend.setBluetoothName(obj.getString("bluetooth_name"));
                 friend.setDateTime(obj.getString("updated_at"));
                 friend.setLatitude(obj.getDouble("latitude"));
                 friend.setLongitude(obj.getDouble("longitude"));
