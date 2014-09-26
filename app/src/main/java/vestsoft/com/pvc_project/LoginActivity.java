@@ -140,6 +140,10 @@ public class LoginActivity extends Activity {
         return password.length() >= 5;
     }
 
+    private void uploadBluetoothName(String phone){
+
+    }
+
     /**
      * Shows the progress UI and hides the login form.
      */
@@ -261,6 +265,10 @@ public class LoginActivity extends Activity {
             editor.commit();
         }
     }
+
+    /**
+      * Represents an asynchronous task to upload bluetooth
+      */
 }
 
 

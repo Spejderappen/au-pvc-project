@@ -286,7 +286,7 @@ public class MapsNavigationDrawerFragment extends Fragment {
                             phone = phone.substring(3,phone.length());
                         if (phone.substring(0,4).equals("0045"))
                             phone = phone.substring(4,phone.length());
-                        contactList.add(new Friend(name, phone, "not set", false, 0, 0));
+                        contactList.add(new Friend(name, phone, "not set", false, 0, 0, null));
                     }
                     pCur.close();
                 }

@@ -50,6 +50,7 @@ public class ActivityMaps extends Activity
 
     private UpdatePositionTask mUpdatePostionTask = null;
     private FetchFriendsPositionsTask mUpdateFriendsPositionsTask = null;
+    private UploadBTNameTask mUpladBTNameTask = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +79,18 @@ public class ActivityMaps extends Activity
 
         mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
         StartUpdatingFriendsPositions();
+
+        UploadBluetoothName();
     }
 
+    private void UploadBluetoothName() {
+        String phone = sharedPrefs.getString("my_phone","not set");
+        String btName = null;
+        
+
+        mUpladBTNameTask = new UploadBTNameTask(phone,btName);
+        mUpdatePostionTask.execute((Void) null);
+    }
 
     @Override
     protected void onResume() {
@@ -436,6 +447,55 @@ public class ActivityMaps extends Activity
                 }
                 friendsUpdated = ServerCommunication.getExistingFriends(friends);
             }
+        }
+    }
+
+    /**
+     * Represents an asynchronous task used to upload
+     * the bluetoothname of the user
+     */
+    public class UploadBTNameTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String mPhoneNumber;
+        private final String mBTName;
+
+        UploadBTNameTask(String phonenumber, String BTName) {
+            mPhoneNumber = phonenumber;
+            mBTName = BTName;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            // attempt authentication against a network service.
+
+            Boolean result = false;
+            try {
+                Friend mySelf = new Friend();
+                mySelf.setPhone(mPhoneNumber);
+                mySelf.setBluetoothName(mBTName);
+                result = true;//ServerCommunication.updateBluetoothName(mySelf);
+            } catch (Exception e) {
+                if (e.getMessage() != null)
+                    Log.e("PVC",e.getMessage());
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            mUpladBTNameTask = null;
+
+            if (success) {
+
+            } else {
+
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUpladBTNameTask = null;
         }
     }
 }
