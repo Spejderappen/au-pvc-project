@@ -85,6 +85,24 @@ public class ServerCommunication {
         return false;
     }
 
+    public static boolean updateBluetoothName(Friend friend) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("bluetooth", "true"));
+        params.add(new BasicNameValuePair("phone_number", friend.getPhone()));
+        params.add(new BasicNameValuePair("bluetooth_name", friend.getBluetoothName()));
+
+        JSONArray result = connectPut(params, "users/1");
+        try {
+            if(result.getJSONObject(0).getString("status").equals("true")) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (JSONException e) {
+        }
+        return false;
+    }
+
     public static List<Friend> getExistingFriends(List<Friend> friends) {
         String friend_numbers = "";
         for(Friend f : friends) {
