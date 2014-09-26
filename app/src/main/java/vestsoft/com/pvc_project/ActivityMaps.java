@@ -59,7 +59,7 @@ public class ActivityMaps extends Activity
         mMapsNavigationDrawerFragment = (MapsNavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
 
         // Set up the drawer.
-        mMapsNavigationDrawerFragment.setUp( R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
+        mMapsNavigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
 
         // Set up layout containing the map
 //        mMapsFragment = new MapsFragment();
@@ -91,16 +91,16 @@ public class ActivityMaps extends Activity
     @Override
     protected void onPause() {
         super.onPause();
-        if (mHandler != null){
+        if (mHandler != null) {
             mHandler.removeCallbacks(mRunnable);
         }
     }
 
-    private void StartUploadingMyPostion(){
+    private void StartUploadingMyPostion() {
         useHandler();
     }
 
-    private void StartUpdatingFriendsPositions(){
+    private void StartUpdatingFriendsPositions() {
         useUpdateFriendsHandler();
     }
 
@@ -113,30 +113,29 @@ public class ActivityMaps extends Activity
     }
 
     public void addFriend(Friend selectedFriend, boolean moveToFriend) {
-        Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(selectedFriend.getLatitide(), selectedFriend.getLongitude()))
+        Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(selectedFriend.getLatitude(), selectedFriend.getLongitude()))
                 .title(selectedFriend.getName())
                 .snippet("Was here at " + selectedFriend.getDateTime())
-        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-        mFriendsMarkers.add(new Pair<Friend, Marker>(selectedFriend,tempMarker));
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        mFriendsMarkers.add(new Pair<Friend, Marker>(selectedFriend, tempMarker));
 
         if (moveToFriend) {
             // Move camera to the position of the friend
-            CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(selectedFriend.getLatitide(), selectedFriend.getLongitude()), 10);
+            CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(selectedFriend.getLatitude(), selectedFriend.getLongitude()), 15);
             mMap.moveCamera(cmUpdate);
         }
     }
 
     public void removeFriend(Friend selectedFriend) {
-        Pair foundPair = null;
-        for (Pair p : mFriendsMarkers){
-            if (p.first.equals(selectedFriend)){
-                ((Marker)p.second).remove();
-                foundPair = p;
-                break;
+        List<Pair> foundPairs = new ArrayList<Pair>();
+        for (Pair p : mFriendsMarkers) {
+            if (((Friend)p.first).getPhone().equals(selectedFriend.getPhone())) {
+                ((Marker) p.second).remove();
+                foundPairs.add(p);
             }
         }
-        if (foundPair != (null)){
-            mFriendsMarkers.remove(foundPair);
+        if (foundPairs.size() > 0) {
+            mFriendsMarkers.remove(foundPairs);
         }
     }
 
@@ -153,25 +152,25 @@ public class ActivityMaps extends Activity
     private LocationManager mLocationManager;
 
     private Marker mMyMarker;
-    private List<Pair<Friend,Marker>> mFriendsMarkers;
+    private List<Pair<Friend, Marker>> mFriendsMarkers;
 
     private Location mMyLastLocation;
 
     /**
-            * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
-            * installed) and the map has not already been instantiated.. This will ensure that we only ever
-    * call {@link #setUpMap()} once when {@link #mMap} is not null.
-            * <p>
-    * If it isn't installed {@link com.google.android.gms.maps.SupportMapFragment} (and
-            * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-    * install/update the Google Play services APK on their device.
-    * <p>
-    * A user can return to this FragmentActivity after following the prompt and correctly
-    * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-    * have been completely destroyed during this process (it is likely that it would only be
-            * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-            * method in {@link #onResume()} to guarantee that it will be called.
-    */
+     * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
+     * installed) and the map has not already been instantiated.. This will ensure that we only ever
+     * call {@link #setUpMap()} once when {@link #mMap} is not null.
+     * <p/>
+     * If it isn't installed {@link com.google.android.gms.maps.SupportMapFragment} (and
+     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
+     * install/update the Google Play services APK on their device.
+     * <p/>
+     * A user can return to this FragmentActivity after following the prompt and correctly
+     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
+     * have been completely destroyed during this process (it is likely that it would only be
+     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
+     * method in {@link #onResume()} to guarantee that it will be called.
+     */
     private void setUpMapIfNeeded() {
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
@@ -182,14 +181,13 @@ public class ActivityMaps extends Activity
                 mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(Marker marker) {
-                        if (marker.equals(mMyMarker)){
+                        if (marker.equals(mMyMarker)) {
 
                         }
-                        return  false;
+                        return false;
                     }
                 });
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 Log.e("Map Fragment", e.getMessage());
             }
 
@@ -209,15 +207,14 @@ public class ActivityMaps extends Activity
             Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (location != null) {
                 mMyMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude()))
-                        .title("My location")
-                        );
+                                .title("My location")
+                );
 
                 CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10);
                 mMap.moveCamera(cmUpdate);
                 mMyLastLocation = location;
             }
-        }
-        else {
+        } else {
             AskUserToTurnOnGPS();
         }
     }
@@ -232,7 +229,7 @@ public class ActivityMaps extends Activity
                     CameraUpdate cmUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude()), 12);
                     mMap.moveCamera(cmUpdate);
                 } else {
-                     Toast.makeText(getApplicationContext(), "Couldn't find your location", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Couldn't find your location", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -302,6 +299,7 @@ public class ActivityMaps extends Activity
      * Represents an  task to get the positions of the friends and upload your own
      */
     Handler mHandler;
+
     public void useHandler() {
         mHandler = new Handler();
         mHandler.post(mRunnable);
@@ -319,7 +317,8 @@ public class ActivityMaps extends Activity
     };
 
     Handler mUpdateFriendsHandler;
-    public void useUpdateFriendsHandler(){
+
+    public void useUpdateFriendsHandler() {
         mUpdateFriendsHandler = new Handler(Looper.getMainLooper());
         mUpdateFriendsHandler.postDelayed(mRunnableUpdateFriends, UPDATE_FREQUENZY);
     }
@@ -339,15 +338,16 @@ public class ActivityMaps extends Activity
      * the user.
      */
     public class UpdatePositionTask extends AsyncTask<Void, Void, Boolean> {
-        UpdatePositionTask( ) {        }
+        UpdatePositionTask() {
+        }
 
         @Override
         protected Boolean doInBackground(Void... params) {
 
             try {
-               UpdateMyPosition();
+                UpdateMyPosition();
             } catch (Exception e) {
-                Log.e(PROJECT_NAME,e.getMessage());
+                Log.e(PROJECT_NAME, e.getMessage());
             }
 
             return true;
@@ -355,7 +355,7 @@ public class ActivityMaps extends Activity
 
         @Override
         protected void onPostExecute(final Boolean success) {
-           // Don't really do anything
+            // Don't really do anything
         }
 
         @Override
@@ -364,7 +364,7 @@ public class ActivityMaps extends Activity
             mUpdateFriendsPositionsTask = null;
         }
 
-        private void UpdateMyPosition(){
+        private void UpdateMyPosition() {
             if (mMyLastLocation != null) {
                 Friend mySelf = new Friend();
                 mySelf.setLatitude(mMyLastLocation.getLatitude());
@@ -376,14 +376,14 @@ public class ActivityMaps extends Activity
     }
 
     /**
-            * Represents an asynchronous login/registration task used to authenticate
-            * the user.
-    */
+     * Represents an asynchronous login/registration task used to authenticate
+     * the user.
+     */
     public class FetchFriendsPositionsTask extends AsyncTask<Void, Void, Boolean> {
         Context context;
         List<Friend> friendsUpdated = new ArrayList<Friend>();
 
-        FetchFriendsPositionsTask(Context context )        {
+        FetchFriendsPositionsTask(Context context) {
             this.context = context;
         }
 
@@ -392,7 +392,7 @@ public class ActivityMaps extends Activity
             try {
                 FetchFriendsPosition();
             } catch (Exception e) {
-                Log.e(PROJECT_NAME,e.getMessage());
+                Log.e(PROJECT_NAME, e.getMessage());
             }
 
             return true;
@@ -400,19 +400,23 @@ public class ActivityMaps extends Activity
 
         @Override
         protected void onPostExecute(final Boolean success) {
-            if (friendsUpdated.size() > 0 ) {
-                for (Pair<Friend, Marker> friendMarkerPair : mFriendsMarkers){
-                    removeFriend(friendMarkerPair.first);
-                }
+            if (friendsUpdated.size() == mFriendsMarkers.size()) {
+                if (friendsUpdated.size() > 0) {
+                    for (Pair<Friend, Marker> friendMarkerPair : mFriendsMarkers) {
+                        removeFriend(friendMarkerPair.first);
+                    }
 
-                mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
-                for (Friend friend : friendsUpdated) {
-                    addFriend(friend,false);
-//                    Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(friend.getLatitide(), friend.getLongitude()))
-//                            .title(friend.getName())
-//                            .snippet("Was here at " + friend.getDateTime())
-//                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-//                    mFriendsMarkers.add(new Pair<Friend, Marker>(friend, tempMarker));
+                    List<Pair<Friend, Marker>> mFriendsMarkersUpdated = new ArrayList<Pair<Friend, Marker>>();
+                    for (Friend friend : friendsUpdated) {
+//                      addFriend(friend, false);
+                        Marker tempMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(friend.getLatitude(), friend.getLongitude()))
+                                .title(friend.getName())
+                                .snippet("Was here at " + friend.getDateTime())
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                        mFriendsMarkersUpdated.add(new Pair<Friend, Marker>(friend, tempMarker));
+                    }
+
+                    mFriendsMarkers = mFriendsMarkersUpdated;
                 }
             }
         }
@@ -423,7 +427,7 @@ public class ActivityMaps extends Activity
             mUpdateFriendsPositionsTask = null;
         }
 
-        private void FetchFriendsPosition(){
+        private void FetchFriendsPosition() {
             Log.d("PVC", Integer.toString(mFriendsMarkers.size()));
             if (mFriendsMarkers.size() > 0) {
                 List<Friend> friends = new ArrayList<Friend>();

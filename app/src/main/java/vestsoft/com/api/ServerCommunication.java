@@ -1,7 +1,6 @@
 package vestsoft.com.api;
 
 import android.util.Log;
-import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -71,7 +70,7 @@ public class ServerCommunication {
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair("position", "true"));
         params.add(new BasicNameValuePair("phone_number", friend.getPhone()));
-        params.add(new BasicNameValuePair("latitude", Double.toString(friend.getLatitide())));
+        params.add(new BasicNameValuePair("latitude", Double.toString(friend.getLatitude())));
         params.add(new BasicNameValuePair("longitude", Double.toString(friend.getLongitude())));
 
         JSONArray result = connectPut(params, "users/1");

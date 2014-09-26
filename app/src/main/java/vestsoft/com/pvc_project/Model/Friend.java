@@ -11,10 +11,20 @@ public class Friend {
     double latitude = 0;
     double longitude = 0;
 
+    public String getBluetoothName() {
+        return bluetoothName;
+    }
+
+    public void setBluetoothName(String bluetoothName) {
+        this.bluetoothName = bluetoothName;
+    }
+
+    String bluetoothName = null;
+
     public Friend() {
 
     }
-    public Friend(String name, String phone, String dateTime, boolean selected, double latitude, double longitude) {
+    public Friend(String name, String phone, String dateTime, boolean selected, double latitude, double longitude, String bluetoothName) {
         super();
         this.name = name;
         this.phone = phone;
@@ -22,6 +32,7 @@ public class Friend {
         this.selected = selected;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.bluetoothName = bluetoothName;
     }
 
     public String getPhone() {
@@ -42,7 +53,7 @@ public class Friend {
     public void setDateTime(String dateTime) {
         this.dateTime = dateTime;
     }
-    public double getLatitide() {
+    public double getLatitude() {
         return latitude;
     }
     public void setLatitude(double latitude) {
