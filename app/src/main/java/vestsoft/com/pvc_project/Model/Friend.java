@@ -10,15 +10,7 @@ public class Friend {
     boolean selected = false;
     double latitude = 0;
     double longitude = 0;
-
-    public String getBluetoothName() {
-        return bluetoothName;
-    }
-
-    public void setBluetoothName(String bluetoothName) {
-        this.bluetoothName = bluetoothName;
-    }
-
+    boolean isCloseToYou = false;
     String bluetoothName = null;
 
     public Friend() {
@@ -65,11 +57,22 @@ public class Friend {
     public void setLongitude(double longitude) {
         this.longitude = longitude;;
     }
-
     public boolean isSelected() {
         return selected;
     }
     public void setSelected(boolean selected) {
         this.selected = selected;
+    }
+    public String getBluetoothName() {
+        return bluetoothName;
+    }
+    public void setBluetoothName(String bluetoothName) {
+        this.bluetoothName = bluetoothName;
+    }
+    public boolean isCloseToYou() {
+        return isCloseToYou;
+    }
+    public void setCloseToYou(boolean isCloseToYou) {
+        this.isCloseToYou = isCloseToYou;
     }
 }

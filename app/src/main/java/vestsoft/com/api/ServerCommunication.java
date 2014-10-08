@@ -121,6 +121,7 @@ public class ServerCommunication {
                 friend.setDateTime(obj.getString("updated_at"));
                 friend.setLatitude(obj.getDouble("latitude"));
                 friend.setLongitude(obj.getDouble("longitude"));
+                friend.setBluetoothName(obj.getString("bluetooth_name"));
                 newFriendList.add(friend);
             } catch (JSONException e) {
             }

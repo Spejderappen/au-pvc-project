@@ -41,6 +41,30 @@
             android:src="@drawable/ic_navigation"
             android:layout_alignRight="@+id/map_friends"
             android:background="@null" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imgBtnToogleReminders"
+            android:src="@drawable/ic_reminder"
+            android:background="@null"
+            android:layout_alignBottom="@+id/tvFriendCloseToYou"
+            android:layout_toLeftOf="@+id/imgBtnGoToMyLocation"
+            android:layout_toStartOf="@+id/imgBtnGoToMyLocation" />
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:text=""
+            android:id="@+id/tvFriendCloseToYou"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:background="#14A4FF"
+            android:textColor="#FFFFFF"
+            android:padding="10dp"
+            android:textSize="20sp"/>
     </RelativeLayout>
 
     <!-- android:layout_gravity="start" tells DrawerLayout to treat

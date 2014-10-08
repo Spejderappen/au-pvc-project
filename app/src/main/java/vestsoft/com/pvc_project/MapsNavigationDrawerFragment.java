@@ -68,6 +68,7 @@ public class MapsNavigationDrawerFragment extends Fragment {
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
     private GetFriendsTask mGetFriendsTask;
+    private List<Friend> mFriendList;
 
     public MapsNavigationDrawerFragment() {
     }
@@ -295,7 +296,12 @@ public class MapsNavigationDrawerFragment extends Fragment {
         return contactList;
     }
 
-
+    public List<Friend> getFriends() {
+        if (mFriendList == null)
+            return new ArrayList<Friend>();
+        else
+            return mFriendList;
+    }
 
     /**
      * Represents an asynchronous create task used to create
@@ -333,6 +339,7 @@ public class MapsNavigationDrawerFragment extends Fragment {
 
             ArrayAdapter<Friend> friendAdapter = new FriendsAdapter(getActivity(), existingFriends);
             mDrawerListView.setAdapter(friendAdapter);
+            mFriendList = existingFriends;
         }
 
         @Override

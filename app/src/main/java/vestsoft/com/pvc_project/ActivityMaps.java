@@ -2,9 +2,13 @@ package vestsoft.com.pvc_project;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
@@ -17,6 +21,10 @@ import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -33,10 +41,11 @@ import java.util.List;
 
 import vestsoft.com.api.ServerCommunication;
 import vestsoft.com.pvc_project.Model.Friend;
+import vestsoft.com.pvc_project.Model.Reminder;
 
 
 public class ActivityMaps extends Activity
-        implements FriendsAdapter.FriendsAdapterCallback, LocationListener {
+        implements FriendsAdapter.FriendsAdapterCallback, LocationListener, GoogleMap.OnInfoWindowClickListener {
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -51,11 +60,23 @@ public class ActivityMaps extends Activity
     private UpdatePositionTask mUpdatePostionTask = null;
     private FetchFriendsPositionsTask mUpdateFriendsPositionsTask = null;
     private UploadBTNameTask mUpladBTNameTask = null;
+    private GetRemindersTask mGetRemindersTask = null;
+    private ReminderTask mReminderTask = null;
+    private SearchForRemindersTask mSearchForRemindersTask = null;
+
+    private BluetoothAdapter btAdapter;
+
+    private TextView tvFriendCloseToYou;
+
+    private boolean reminderModeOn = false;
+    private String phone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        btAdapter = BluetoothAdapter.getDefaultAdapter();
 
         mMapsNavigationDrawerFragment = (MapsNavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
 
@@ -75,22 +96,28 @@ public class ActivityMaps extends Activity
 
         sharedPrefs = getSharedPreferences(PROJECT_NAME, MODE_PRIVATE);
 
+        phone = sharedPrefs.getString("my_phone", "not set");
+
         StartUploadingMyPostion();
+        getMyReminders();
 
         mFriendsMarkers = new ArrayList<Pair<Friend, Marker>>();
         StartUpdatingFriendsPositions();
 
         UploadBluetoothName();
+        SearchForBtDevices();
+
+        tvFriendCloseToYou = (TextView) findViewById(R.id.tvFriendCloseToYou);
+        tvFriendCloseToYou.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tvFriendCloseToYou.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        startReminderSearch();
     }
 
-    private void UploadBluetoothName() {
-        String phone = sharedPrefs.getString("my_phone","not set");
-        String btName = null;
-        
-
-        mUpladBTNameTask = new UploadBTNameTask(phone,btName);
-        mUpdatePostionTask.execute((Void) null);
-    }
 
     @Override
     protected void onResume() {
@@ -111,6 +138,32 @@ public class ActivityMaps extends Activity
         useHandler();
     }
 
+    Handler reminder;
+
+    private void startReminderSearch() {
+        reminder = new Handler();
+        reminder.post(mRunnableReminder);
+    }
+
+    private Runnable mRunnableReminder = new Runnable() {
+
+        @Override
+        public void run() {
+            if (mMyLastLocation != null) {
+                LatLng latLng = new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude());
+
+                mSearchForRemindersTask = new SearchForRemindersTask(mMapReminders, latLng);
+                mSearchForRemindersTask.execute((Void) null);
+            }
+            mHandler.postDelayed(mRunnable, UPDATE_FREQUENZY);
+        }
+    };
+
+    private void getMyReminders() {
+        mGetRemindersTask = new GetRemindersTask(phone);
+        mGetRemindersTask.execute((Void) null);
+    }
+
     private void StartUpdatingFriendsPositions() {
         useUpdateFriendsHandler();
     }
@@ -121,6 +174,30 @@ public class ActivityMaps extends Activity
             addFriend(selectedFriend, true);
         else
             removeFriend(selectedFriend);
+    }
+
+    private void UploadBluetoothName() {
+        String phone = sharedPrefs.getString("my_phone", "not set");
+        String btName = btAdapter.getAddress();
+
+        mUpladBTNameTask = new UploadBTNameTask(phone, btName);
+        mUpladBTNameTask.execute((Void) null);
+    }
+
+    private void SearchForBtDevices() {
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0); // Makes the device always discoverable
+        startActivity(discoverableIntent);
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+//        filter.addAction(BluetoothDevice.ACTION_UUID);
+//        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(ActionFoundReceiver, filter);
+
+        BluetoothAdapter.getDefaultAdapter().startDiscovery();
+
+        //useSearchForBtDeviesHandler();
     }
 
     public void addFriend(Friend selectedFriend, boolean moveToFriend) {
@@ -140,7 +217,7 @@ public class ActivityMaps extends Activity
     public void removeFriend(Friend selectedFriend) {
         List<Pair> foundPairs = new ArrayList<Pair>();
         for (Pair p : mFriendsMarkers) {
-            if (((Friend)p.first).getPhone().equals(selectedFriend.getPhone())) {
+            if (((Friend) p.first).getPhone().equals(selectedFriend.getPhone())) {
                 ((Marker) p.second).remove();
                 foundPairs.add(p);
             }
@@ -154,6 +231,7 @@ public class ActivityMaps extends Activity
     protected void onDestroy() {
         super.onDestroy();
         mHandler = null;
+        unregisterReceiver(ActionFoundReceiver);
     }
 
     /**
@@ -164,6 +242,8 @@ public class ActivityMaps extends Activity
 
     private Marker mMyMarker;
     private List<Pair<Friend, Marker>> mFriendsMarkers;
+
+    private List<Pair<Reminder, Marker>> mMapReminders = new ArrayList<Pair<Reminder, Marker>>();
 
     private Location mMyLastLocation;
 
@@ -189,15 +269,6 @@ public class ActivityMaps extends Activity
             MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map_friends);
             try {
                 mMap = mapFragment.getMap();
-                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(Marker marker) {
-                        if (marker.equals(mMyMarker)) {
-
-                        }
-                        return false;
-                    }
-                });
             } catch (Exception e) {
                 Log.e("Map Fragment", e.getMessage());
             }
@@ -228,6 +299,29 @@ public class ActivityMaps extends Activity
         } else {
             AskUserToTurnOnGPS();
         }
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (marker.equals(mMyMarker)) {
+
+                }
+                return false;
+            }
+        });
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                if (reminderModeOn) {
+                    Reminder reminder = new Reminder();
+                    reminder.setLongitude(latLng.longitude);
+                    reminder.setLatitude(latLng.latitude);
+                    addReminderShowDialog(reminder);
+                }
+            }
+        });
+
+        mMap.setOnInfoWindowClickListener(this);
     }
 
     private void setUpButtons() {
@@ -244,6 +338,110 @@ public class ActivityMaps extends Activity
                 }
             }
         });
+
+        findViewById(R.id.imgBtnToogleReminders).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ImageButton imgBtn = (ImageButton) v;
+                if (reminderModeOn) {
+                    imgBtn.setImageResource(R.drawable.ic_reminder);
+                } else {
+                    imgBtn.setImageResource(R.drawable.ic_reminder_selected);
+                }
+
+                reminderModeOn = !reminderModeOn;
+
+                for (Pair<Reminder, Marker> pair : mMapReminders) {
+                    pair.second.setVisible(reminderModeOn);
+                }
+            }
+        });
+    }
+
+    private void addReminderShowDialog(final Reminder reminder) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Add reminder");
+        alert.setMessage("Type the reminder you want to be shown");
+        alert.setCancelable(false);
+
+        // Set an EditText view to get user input
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String reminderText = input.getText().toString();
+
+                reminder.setText(reminderText);
+
+                addReminderToMap(reminder);
+            }
+        });
+
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // Canceled.
+            }
+        });
+
+        AlertDialog alertToShow = alert.create();
+        alertToShow.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE); // To show the keypad when the dialog is shown
+        alertToShow.show();
+    }
+
+    private void editReminderShowDialog(final Pair<Reminder, Marker> pairReminderMarker) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Edit reminder");
+        alert.setMessage("Type the reminder you want to be shown");
+        alert.setCancelable(false);
+
+        // Set an EditText view to get user input
+        final EditText input = new EditText(this);
+        input.setText(pairReminderMarker.first.getText());
+
+        alert.setView(input);
+        alert.setPositiveButton("Save reminder", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String reminderText = input.getText().toString();
+
+                pairReminderMarker.first.setText(reminderText);
+                pairReminderMarker.second.setSnippet(reminderText);
+
+                // Just to make sure that the info text is updated
+                pairReminderMarker.second.hideInfoWindow();
+                pairReminderMarker.second.showInfoWindow();
+
+                mReminderTask = new ReminderTask(pairReminderMarker.first, 3, phone);
+                mReminderTask.execute((Void)null);
+            }
+        });
+
+        alert.setNegativeButton("Delete", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                pairReminderMarker.second.remove();
+                mMapReminders.remove(pairReminderMarker);
+
+                mReminderTask = new ReminderTask(pairReminderMarker.first, 2, phone);
+                mReminderTask.execute((Void)null);
+            }
+        });
+
+        AlertDialog alertToShow = alert.create();
+        alertToShow.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE); // To show the keypad when the dialog is shown
+        alertToShow.show();
+    }
+
+    private void addReminderToMap(Reminder reminder) {
+        Marker markerReminder = mMap.addMarker(new MarkerOptions().position(new LatLng(reminder.getLatitude(), reminder.getLongitude()))
+                .title("Reminder")
+                .snippet(reminder.getText())
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+
+        mMapReminders.add(new Pair<Reminder, Marker>(reminder, markerReminder));
+        mReminderTask = new ReminderTask(reminder, 1, phone);
+        mReminderTask.execute((Void)null);
     }
 
     // <editor-fold desc="- Region - Things regarding Location/GPS">
@@ -254,6 +452,19 @@ public class ActivityMaps extends Activity
                 5000, // How often the location  mininum is requested, in milliseconds
                 10, // the minimum distance interval for notifications, in meters
                 this);
+    }
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        Pair<Reminder, Marker> pairReminderMarker = null;
+        for (Pair<Reminder, Marker> pair : mMapReminders) {
+            if (pair.second.equals(marker)) {
+                pairReminderMarker = pair;
+                break;
+            }
+        }
+
+        editReminderShowDialog(pairReminderMarker);
     }
 
     private void AskUserToTurnOnGPS() {
@@ -307,7 +518,7 @@ public class ActivityMaps extends Activity
 // </editor-fold>
 
     /**
-     * Represents an  task to get the positions of the friends and upload your own
+     * Represents an task to get the positions of the friends and upload your own
      */
     Handler mHandler;
 
@@ -344,6 +555,7 @@ public class ActivityMaps extends Activity
         }
     };
 
+
     /**
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
@@ -373,6 +585,7 @@ public class ActivityMaps extends Activity
         protected void onCancelled() {
             mUpdatePostionTask = null;
             mUpdateFriendsPositionsTask = null;
+            mUpladBTNameTask = null;
         }
 
         private void UpdateMyPosition() {
@@ -473,10 +686,10 @@ public class ActivityMaps extends Activity
                 Friend mySelf = new Friend();
                 mySelf.setPhone(mPhoneNumber);
                 mySelf.setBluetoothName(mBTName);
-                result = true;//ServerCommunication.updateBluetoothName(mySelf);
+                result = ServerCommunication.updateBluetoothName(mySelf);
             } catch (Exception e) {
                 if (e.getMessage() != null)
-                    Log.e("PVC",e.getMessage());
+                    Log.e("PVC", e.getMessage());
             }
 
             return result;
@@ -498,4 +711,170 @@ public class ActivityMaps extends Activity
             mUpladBTNameTask = null;
         }
     }
+
+    public class GetRemindersTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String phone;
+        List<Reminder> reminderList = null;
+
+        GetRemindersTask(String phone) {
+            this.phone = phone;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            //            reminderTask = ServerCommunication.getReminders(phone);
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            for (Reminder reminder : reminderList) {
+                addReminderToMap(reminder);
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUpladBTNameTask = null;
+        }
+    }
+
+    public class SearchForRemindersTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final List<Pair<Reminder, Marker>> reminderMarkerPairs;
+        LatLng myPosition;
+
+        SearchForRemindersTask(List<Pair<Reminder, Marker>> reminderMarkerPairs, LatLng myPosition) {
+            this.reminderMarkerPairs = reminderMarkerPairs;
+            this.myPosition = myPosition;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            for (Pair<Reminder, Marker> reminderMarkerPair : reminderMarkerPairs) {
+                float[] distance = new float[0];
+                Location.distanceBetween(myPosition.latitude, myPosition.longitude, reminderMarkerPair.second.getPosition().latitude, reminderMarkerPair.second.getPosition().longitude, distance);
+            }
+            return true;
+        }
+
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUpladBTNameTask = null;
+        }
+    }
+
+    public class ReminderTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final Reminder reminder;
+        private final int reminderTask;
+        private final String phone;
+        List<Reminder> reminderList = null;
+
+        ReminderTask(Reminder reminder, int reminderAction, String phone) {
+            this.reminder = reminder;
+            this.reminderTask = reminderAction;
+            this.phone = phone;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            switch (reminderTask) {
+                case 1:
+                    createReminder();
+                    break;
+                case 2:
+                    deleteReminder();
+                    break;
+                case 3:
+                    editReminder();
+                    break;
+
+            }
+
+            return true;
+        }
+
+        private void createReminder() {
+            //  ServerCommunication.createReminder(reminder, phone);
+        }
+
+        private void deleteReminder() {
+            //  ServerCommunication.deleteReminder(reminder);
+        }
+
+        private void editReminder() {
+            //  ServerCommunication.editReminder(reminder);
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            // Nothing really happens here anyway..
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUpladBTNameTask = null;
+        }
+    }
+
+    private List<Friend> closeFriendsBefore = new ArrayList<Friend>();
+    private List<Friend> closeFriendsNow = new ArrayList<Friend>();
+
+    // <editor-fold desc="- Region - BroadCastReceiver">
+    // Used when something is found from the bluetoothAdapter.startDiscovery();
+    private final BroadcastReceiver ActionFoundReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Some serious performance optimization could be done here
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                for (Friend friend : mMapsNavigationDrawerFragment.getFriends()) {
+                    if (friend.getBluetoothName().equals(device.getAddress())) {
+                        closeFriendsNow.add(friend);
+                        if (!friend.isCloseToYou()) {
+                            tvFriendCloseToYou.setText(friend.getName() + " is close to you");
+                            tvFriendCloseToYou.setVisibility(View.VISIBLE);
+                            friend.setCloseToYou(true);
+                        }
+                    }
+                }
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                for (Friend closeFriendBefore : closeFriendsBefore) {
+                    boolean isClose = false;
+                    for (Friend closeFriendNow : closeFriendsNow) {
+                        if (closeFriendNow.getPhone().equals(closeFriendBefore.getPhone())) {
+                            isClose = true;
+                            break;
+                        }
+                    }
+                    // If friend is not close now
+                    if (!isClose) {
+                        for (Friend friend : mMapsNavigationDrawerFragment.getFriends()) {
+                            if (friend.getPhone().equals(closeFriendBefore.getPhone())) {
+                                friend.setCloseToYou(false);
+                                tvFriendCloseToYou.setText(friend.getName() + " is not close to you anymore");
+                                tvFriendCloseToYou.setVisibility(View.VISIBLE);
+                                break;
+                            }
+                        }
+                    }
+                }
+                closeFriendsBefore = new ArrayList<Friend>(closeFriendsNow);
+                closeFriendsNow.clear();
+
+                btAdapter.startDiscovery();
+            }
+        }
+    };
+// </editor-fold>
 }
