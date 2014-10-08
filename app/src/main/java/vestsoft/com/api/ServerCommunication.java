@@ -8,6 +8,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import vestsoft.com.pvc_project.Model.Friend;
+import vestsoft.com.pvc_project.Model.Reminder;
 
 /**
  * Created by michael on 29/08/14.
@@ -101,6 +103,63 @@ public class ServerCommunication {
         } catch (JSONException e) {
         }
         return false;
+    }
+
+    public static List<Reminder> getReminders(Friend friend) {
+        List<Reminder> returnList = new ArrayList<Reminder>();
+
+        JSONArray result = connectGet("reminders.json?phone_number" + friend.getPhone());
+        for (int i = 0; result.length() > i; i++) {
+            try {
+                JSONObject obj = result.getJSONObject(i);
+                Reminder reminder = new Reminder();
+                reminder.setId(obj.getInt("id"));
+                reminder.setText(obj.getString("description"));
+                reminder.setLatitude(obj.getDouble("latitude"));
+                reminder.setLongitude(obj.getDouble("longitude"));
+                returnList.add(reminder);
+            } catch (JSONException e) {
+            }
+        }
+        return returnList;
+    }
+
+    public static boolean createReminder(Reminder reminder, Friend friend) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("phone_number", friend.getPhone()));
+        params.add(new BasicNameValuePair("description", reminder.getText()));
+        params.add(new BasicNameValuePair("latitude", Double.toString(reminder.getLatitude())));
+        params.add(new BasicNameValuePair("longitude", Double.toString(reminder.getLongitude())));
+
+        JSONArray result = connectPost(params, "reminders");
+        try {
+            if(result.getJSONObject(0).getString("status").equals("true")) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+
+    public static boolean updateReminder(Reminder reminder, Friend friend) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+        params.add(new BasicNameValuePair("description", reminder.getText()));
+        params.add(new BasicNameValuePair("phone_number", friend.getPhone()));
+
+        JSONArray result = connectPut(params, "reminders/" + reminder.getId());
+
+        try {
+            if(result.getJSONObject(0).getString("status").equals("true")) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (JSONException e) {
+            return false;
+        }
     }
 
     public static List<Friend> getExistingFriends(List<Friend> friends) {
