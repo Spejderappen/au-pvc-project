@@ -10,6 +10,8 @@ public class Reminder {
     double longitude = 0;
     double radius = 0;
 
+    boolean isWithinRange = false;
+
     public int getId() {
         return id;
     }
@@ -50,5 +52,11 @@ public class Reminder {
         this.radius = radius;
     }
 
+    public boolean isWithinRange() {
+        return isWithinRange;
+    }
 
+    public void setWithinRange(boolean isWithinRange) {
+        this.isWithinRange = isWithinRange;
+    }
 }

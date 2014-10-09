@@ -108,7 +108,7 @@ public class ServerCommunication {
     public static List<Reminder> getReminders(Friend friend) {
         List<Reminder> returnList = new ArrayList<Reminder>();
 
-        JSONArray result = connectGet("reminders.json?phone_number" + friend.getPhone());
+        JSONArray result = connectGet("reminders.json?phone_number=" + friend.getPhone());
         for (int i = 0; result.length() > i; i++) {
             try {
                 JSONObject obj = result.getJSONObject(i);

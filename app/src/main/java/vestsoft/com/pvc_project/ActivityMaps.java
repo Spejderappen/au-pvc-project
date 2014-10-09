@@ -66,7 +66,7 @@ public class ActivityMaps extends Activity
 
     private BluetoothAdapter btAdapter;
 
-    private TextView tvFriendCloseToYou;
+    private TextView topMessage;
 
     private boolean reminderModeOn = false;
     private String phone;
@@ -107,11 +107,11 @@ public class ActivityMaps extends Activity
         UploadBluetoothName();
         SearchForBtDevices();
 
-        tvFriendCloseToYou = (TextView) findViewById(R.id.tvFriendCloseToYou);
-        tvFriendCloseToYou.setOnClickListener(new View.OnClickListener() {
+        topMessage = (TextView) findViewById(R.id.tvFriendCloseToYou);
+        topMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                tvFriendCloseToYou.setVisibility(View.INVISIBLE);
+                topMessage.setVisibility(View.INVISIBLE);
             }
         });
 
@@ -155,7 +155,7 @@ public class ActivityMaps extends Activity
                 mSearchForRemindersTask = new SearchForRemindersTask(mMapReminders, latLng);
                 mSearchForRemindersTask.execute((Void) null);
             }
-            mHandler.postDelayed(mRunnable, UPDATE_FREQUENZY);
+            reminder.postDelayed(mRunnableReminder, UPDATE_FREQUENZY);
         }
     };
 
@@ -375,7 +375,7 @@ public class ActivityMaps extends Activity
 
                 reminder.setText(reminderText);
 
-                addReminderToMap(reminder);
+                addReminderToMap(reminder, true);
             }
         });
 
@@ -414,7 +414,7 @@ public class ActivityMaps extends Activity
                 pairReminderMarker.second.showInfoWindow();
 
                 mReminderTask = new ReminderTask(pairReminderMarker.first, 3, phone);
-                mReminderTask.execute((Void)null);
+                mReminderTask.execute((Void) null);
             }
         });
 
@@ -424,7 +424,7 @@ public class ActivityMaps extends Activity
                 mMapReminders.remove(pairReminderMarker);
 
                 mReminderTask = new ReminderTask(pairReminderMarker.first, 2, phone);
-                mReminderTask.execute((Void)null);
+                mReminderTask.execute((Void) null);
             }
         });
 
@@ -433,15 +433,19 @@ public class ActivityMaps extends Activity
         alertToShow.show();
     }
 
-    private void addReminderToMap(Reminder reminder) {
+    private void addReminderToMap(Reminder reminder, boolean isNewReminder) {
         Marker markerReminder = mMap.addMarker(new MarkerOptions().position(new LatLng(reminder.getLatitude(), reminder.getLongitude()))
                 .title("Reminder")
                 .snippet(reminder.getText())
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
-
+        markerReminder.setVisible(false);
         mMapReminders.add(new Pair<Reminder, Marker>(reminder, markerReminder));
-        mReminderTask = new ReminderTask(reminder, 1, phone);
-        mReminderTask.execute((Void)null);
+
+        if (isNewReminder) {
+            markerReminder.setVisible(true);
+            mReminderTask = new ReminderTask(reminder, 1, phone);
+            mReminderTask.execute((Void) null);
+        }
     }
 
     // <editor-fold desc="- Region - Things regarding Location/GPS">
@@ -715,7 +719,7 @@ public class ActivityMaps extends Activity
     public class GetRemindersTask extends AsyncTask<Void, Void, Boolean> {
 
         private final String phone;
-        List<Reminder> reminderList = null;
+        List<Reminder> reminderList = new ArrayList<Reminder>();
 
         GetRemindersTask(String phone) {
             this.phone = phone;
@@ -723,14 +727,16 @@ public class ActivityMaps extends Activity
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            //            reminderTask = ServerCommunication.getReminders(phone);
+            Friend mySelf = new Friend();
+            mySelf.setPhone(phone);
+            reminderList = ServerCommunication.getReminders(mySelf);
             return true;
         }
 
         @Override
         protected void onPostExecute(final Boolean success) {
             for (Reminder reminder : reminderList) {
-                addReminderToMap(reminder);
+                addReminderToMap(reminder, false);
             }
         }
 
@@ -740,11 +746,14 @@ public class ActivityMaps extends Activity
         }
     }
 
+    Reminder reminderLastTime = null;
+
     public class SearchForRemindersTask extends AsyncTask<Void, Void, Boolean> {
 
         private final List<Pair<Reminder, Marker>> reminderMarkerPairs;
         LatLng myPosition;
-
+        Reminder reminderToShow = new Reminder();
+        boolean sameAsLastTime = false;
         SearchForRemindersTask(List<Pair<Reminder, Marker>> reminderMarkerPairs, LatLng myPosition) {
             this.reminderMarkerPairs = reminderMarkerPairs;
             this.myPosition = myPosition;
@@ -752,17 +761,37 @@ public class ActivityMaps extends Activity
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            for (Pair<Reminder, Marker> reminderMarkerPair : reminderMarkerPairs) {
-                float[] distance = new float[0];
-                Location.distanceBetween(myPosition.latitude, myPosition.longitude, reminderMarkerPair.second.getPosition().latitude, reminderMarkerPair.second.getPosition().longitude, distance);
+            for (Pair<Reminder, Marker> reminderMarkerPair : this.reminderMarkerPairs) {
+                double latStart = myPosition.latitude;
+                double longStart = myPosition.longitude;
+                double latEnd = reminderMarkerPair.first.getLatitude();
+                double longEnd = reminderMarkerPair.first.getLongitude();
+
+                float distance = calculateDistance((float) latStart, (float) longStart, (float) latEnd, (float) longEnd);
+                if (distance < 0.05) { // If within radius of 50 meters
+                    if (!reminderMarkerPair.first.equals(reminderLastTime)) {
+                        reminderToShow = reminderMarkerPair.first;
+                        reminderLastTime = reminderToShow;
+                        return true;
+                    }else{
+                         sameAsLastTime = true;
+                    }
+                }
             }
-            return true;
+            if(!sameAsLastTime)
+                reminderLastTime = null;
+            return false; // no one is within range
         }
 
 
         @Override
-        protected void onPostExecute(final Boolean success) {
-
+        protected void onPostExecute(final Boolean showMessage) {
+            if (showMessage) {
+                if (reminderToShow != null) {
+                    topMessage.setText(reminderToShow.getText());
+                    topMessage.setVisibility(View.VISIBLE);
+                }
+            }
         }
 
         @Override
@@ -776,7 +805,6 @@ public class ActivityMaps extends Activity
         private final Reminder reminder;
         private final int reminderTask;
         private final String phone;
-        List<Reminder> reminderList = null;
 
         ReminderTask(Reminder reminder, int reminderAction, String phone) {
             this.reminder = reminder;
@@ -796,22 +824,25 @@ public class ActivityMaps extends Activity
                 case 3:
                     editReminder();
                     break;
-
             }
 
             return true;
         }
 
         private void createReminder() {
-            //  ServerCommunication.createReminder(reminder, phone);
+            Friend mySelf = new Friend();
+            mySelf.setPhone(phone);
+            ServerCommunication.createReminder(reminder, mySelf);
         }
 
         private void deleteReminder() {
-            //  ServerCommunication.deleteReminder(reminder);
+//            ServerCommunication.deleteReminder(reminder);
         }
 
         private void editReminder() {
-            //  ServerCommunication.editReminder(reminder);
+            Friend mySelf = new Friend();
+            mySelf.setPhone(phone);
+            ServerCommunication.updateReminder(reminder, mySelf);
         }
 
         @Override
@@ -842,8 +873,8 @@ public class ActivityMaps extends Activity
                     if (friend.getBluetoothName().equals(device.getAddress())) {
                         closeFriendsNow.add(friend);
                         if (!friend.isCloseToYou()) {
-                            tvFriendCloseToYou.setText(friend.getName() + " is close to you");
-                            tvFriendCloseToYou.setVisibility(View.VISIBLE);
+                            topMessage.setText(friend.getName() + " is close to you");
+                            topMessage.setVisibility(View.VISIBLE);
                             friend.setCloseToYou(true);
                         }
                     }
@@ -862,8 +893,8 @@ public class ActivityMaps extends Activity
                         for (Friend friend : mMapsNavigationDrawerFragment.getFriends()) {
                             if (friend.getPhone().equals(closeFriendBefore.getPhone())) {
                                 friend.setCloseToYou(false);
-                                tvFriendCloseToYou.setText(friend.getName() + " is not close to you anymore");
-                                tvFriendCloseToYou.setVisibility(View.VISIBLE);
+                                topMessage.setText(friend.getName() + " is not close to you anymore");
+                                topMessage.setVisibility(View.VISIBLE);
                                 break;
                             }
                         }
@@ -877,4 +908,19 @@ public class ActivityMaps extends Activity
         }
     };
 // </editor-fold>
+
+    private final int earthRadius = 6371;
+
+    // I didn't do nothing
+    public float calculateDistance(float lat1, float lon1, float lat2, float lon2) {
+        float dLat = (float) Math.toRadians(lat2 - lat1);
+        float dLon = (float) Math.toRadians(lon2 - lon1);
+        float a =
+                (float) (Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1))
+                        * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2));
+        float c = (float) (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        float d = earthRadius * c;
+        return d;
+    }
+
 }
